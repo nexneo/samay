@@ -1,0 +1,37 @@
+package data;
+
+message Project {
+  required string name = 1;
+  optional string company = 2;
+  optional bool hide = 3;
+  optional string sha = 4;
+}
+
+message Entry {
+  enum Type {
+    CHORE = 0;
+    FUN = 1;
+    WORK = 2;
+  }
+
+  required string id = 1;
+  required int64 duration = 2;
+  optional string content = 3;
+  optional Person creator = 4;
+  optional int64 started = 5;
+  optional int64 ended = 6;
+  optional Type type = 7 [default = WORK];
+  optional Project project = 8;
+  optional bool billable = 9;
+  repeated string tags = 10;
+}
+
+message Person {
+  required string email = 1; 
+  required string name = 2; 
+}
+
+message Timer {
+  required Project project = 1;
+  required int64 started = 2;
+}
