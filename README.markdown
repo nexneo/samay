@@ -23,7 +23,7 @@ Samay is a hindi word for Time.
 
 
 Unique features (not so much in reality)
-------------------------------------
+----------------------------------------
 
 * Command line based simple interface
 * Uses simple files to store data.
@@ -34,21 +34,36 @@ Unique features (not so much in reality)
 Examples
 --------
 
-*Start/Stop timer*
+### Start/Stop timer
 
 	$ samay start -p "Project Name"
+	$ samay start "Project Name"
+	$ samay start MyProject 
 	...
 	$ samay stop -p "Project Name" -m "worked on Samay Readme"
+	$ samay stop MyProject 
+		
+if you don't specify -m it will open your $EDITOR to enter message 
+and close editor to finish.
 
-*Directly log hours*
+### Directly log hours
 
 	$ samay entry -p "Project Name" -d 1.5h -m "worked on Samay examples"
 
-	A duration string is a possibly signed sequence of decimal numbers, 
-	each with optional fraction and a unit suffix, such as "300m", "1.5h" 
-	or "2h45m". Valid time units are "s", "m", "h".
+A duration string is a possibly signed sequence of decimal numbers, 
+each with optional fraction and a unit suffix, such as "300m", "1.5h" 
+or "2h45m". Valid time units are "s", "m", "h".
 
-*Reporting*
+	$ samay entry MyProject -d 30m
+
+Twitter style #hashtags are supported in log message, example message:
+"Some time spent in #project #management" that will create two tags
+"project" and "management" for that entry
+	
+This will open editor window to enter log message.
+
+
+### Reporting
 	
 	$ samay report 
 
@@ -65,19 +80,30 @@ Examples
 	$ samay report -r 3 
 	(here 3 is month e.g March)
 
-*To add non billable hours*
+### To add non billable hours
 
 	$ samay stop -p "Project Name" -m "worked on Samay Readme" -bill false
-	- or -
-	$ samay entry -p "Project Name" -d 1.5h -m "worked on Samay examples" -bill false
 
-*Remove project with all of its data*
+or
+
+	$ samay entry MyProject -d 1.5h -bill false
+
+You can always skip -m option it will open $EDITOR
+
+### Remove project with all of its data
 
 	$ samay remove -p "Project Name"
+	$ samay remove MyProject
 
-*Log last 10 entries from Project*
+### Log last 10 entries from Project
 
 	$ samay log -p Samay
+
+or
+
+	$ samay log Samay
+
+
 
 Caveats
 -------

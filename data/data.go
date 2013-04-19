@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/nexneo/samay/util"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -149,8 +151,18 @@ func (t *Timer) Duration() time.Duration {
 // Entry
 
 func (project *Project) CreateEntry(content string, billable bool) *Entry {
+	content = strings.Trim(content, " \n\t\r")
+	tags := make([]string, 20)
+
+	tagsFinder := regexp.MustCompile("\\B#(\\w\\w+)")
+	for _, v := range tagsFinder.FindAllStringSubmatch(content, 20) {
+		if len(v) > 1 {
+			tags = append(tags, v[1])
+		}
+	}
 	e := Entry{
 		Project:  project,
+		Tags:     tags,
 		Content:  proto.String(content),
 		Billable: proto.Bool(billable),
 	}

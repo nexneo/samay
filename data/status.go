@@ -26,6 +26,7 @@ func (project *Project) OnClock() (bool, *Timer) {
 	return timer.GetStarted() > 0, timer
 }
 
+// fetch status of project in goroutine and return on channel
 func (project *Project) Status(statues chan *ProjectStatus) {
 	go func() {
 		status := new(ProjectStatus)
@@ -61,16 +62,19 @@ func (t *Timer) hoursMins() hoursMins {
 	return hoursMinsFromDuration(t.Duration())
 }
 
+// hours and minutes from duration
 func hoursMinsFromDuration(d time.Duration) (ret hoursMins) {
 	ret.hours = int(d.Hours())
 	ret.mins = int(d.Minutes()) - (ret.hours * 60)
 	return
 }
 
+// consistent string presentation of hoursMins
 func (hm hoursMins) String() string {
 	return fmt.Sprintf("%3d:%02d", hm.hours, hm.mins)
 }
 
+// simple function that return repeated Char in string.
 func repeatChar(c string, length int) (ret string) {
 	for i := 0; i < length; i++ {
 		ret += c
@@ -91,6 +95,7 @@ func PrintStatus(month int) {
 		}
 	}
 
+	// if no projects nothing to do
 	if counter == 0 {
 		return
 	}
@@ -105,14 +110,7 @@ func PrintStatus(month int) {
 		scoppedYear = now.Year()
 	}
 
-	fmt.Println("\nReport for", time.Month(scoppedMonth), scoppedYear)
-
-	column := 1 + 6 + 1 + 2
-	top := repeatChar("-", longest+3+column+column)
-	padding := repeatChar(" ", (longest-4)/2)
-	fmt.Println(top)
-	fmt.Printf("|%sProject%s|  Hours |  Clock |\n", padding, padding)
-	fmt.Println(top)
+	printStatusHeader(longest)
 
 	for i := 0; i < counter; i++ {
 		status := <-statues
@@ -131,5 +129,21 @@ func PrintStatus(month int) {
 		}
 		fmt.Println()
 	}
-	fmt.Println(top)
+
+	printRuler(longest)
+}
+
+func printStatusHeader(longest int) {
+	fmt.Println("\nReport for", time.Month(scoppedMonth), scoppedYear)
+
+	padding := repeatChar(" ", (longest-4)/2)
+	printRuler(longest)
+	fmt.Printf("|%sProject%s|  Hours |  Clock |\n", padding, padding)
+	printRuler(longest)
+}
+
+func printRuler(longest int) {
+	column := 1 + 6 + 1 + 2
+	ruler := repeatChar("-", longest+3+column+column)
+	fmt.Println(ruler)
 }
