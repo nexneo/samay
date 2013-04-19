@@ -16,6 +16,13 @@ func Save(ps Persistable) error {
 	return err
 }
 
+func Persisted(ps Persistable) bool {
+	if Load(ps) != nil {
+		return false
+	}
+	return true
+}
+
 func write(ps Persistable) error {
 	data, err := proto.Marshal(ps)
 	if err != nil {

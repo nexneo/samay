@@ -14,9 +14,9 @@ var (
 	cmd,
 	name,
 	typ,
+	newName,
 	content string
 
-	help,
 	billable bool
 
 	duration time.Duration
@@ -52,8 +52,16 @@ func parseFlags() {
 
 	initflags(cmd)
 
+	if cmd == "help" {
+		usage()
+		os.Exit(0)
+	}
+
 	if len(os.Args) < 3 {
 		cmdflags.Parse(os.Args)
+	} else if cmd == "mv" {
+		name = os.Args[2]
+		newName = os.Args[3]
 	} else {
 		cmdflags.Parse(os.Args[2:])
 		// if -p flag not set, check if second argument is Project name
@@ -61,11 +69,6 @@ func parseFlags() {
 			name = os.Args[2]
 			cmdflags.Parse(os.Args[3:])
 		}
-	}
-
-	if help || cmd == "help" {
-		usage()
-		os.Exit(0)
 	}
 
 	if name == "" && cmd != "report" {
@@ -78,28 +81,28 @@ func parseFlags() {
 // Bind variables with command line flags
 func initflags(cmd string) {
 	cmdflags = flag.NewFlagSet(cmd, flag.ExitOnError)
-	cmdflags.StringVar(&name, "p", "", "Project Name")
-	cmdflags.StringVar(&content, "m", "", "Log content")
+	cmdflags.StringVar(&content, "m", "", "Description for entry")
 
 	cmdflags.IntVar(&month, "r", int(time.Now().Month()), "Report Month")
-	cmdflags.IntVar(&idx, "i", -1, "Index(#)")
+	cmdflags.IntVar(&idx, "i", -1, "Entry index(#) in log")
 
 	cmdflags.DurationVar(&duration, "d", time.Hour, "Entry Duration")
 
 	cmdflags.BoolVar(&billable, "bill", true, "Billable")
-	cmdflags.BoolVar(&help, "h", false, "This Help")
 }
 
 func usage() {
 	fmt.Fprintf(os.Stderr,
-		"Usage: samay [command] [project] [options]\n\nCommands:\n%s%s%s%s%s%s%s\n\nOptions:\n",
+		"Usage: samay [command] [project] [options|new project]\n\nCommands:\n%s%s%s%s%s%s%s%s%s\n\nOptions:\n",
 		"  start (s) : Start timer\n",
-		"  stop  (p) : Stop Timer\n",
-		"  entry (e) : Direct time log entry\n",
-		"  remove    : Remove project along with all entries\n",
+		"  stop  (p) : Stop Timer and entry with -m=(description) or uses $EDITOR\n",
+		"  entry (e) : Direct entry with -d=(duration)\n",
+		"  rm        : Remove all entries, or single with -i=(#)\n",
+		"  mv        : Move all entries to new project\n",
 		"  log       : Show log for project\n",
-		"  del       : Delete specific entry (specifiy -#)\n",
-		"  report    : Report for all projects\n")
+		"  show      : Show project or entry with -i=(#)\n",
+		"  report    : Report for all projects\n",
+		"  help      : Help\n")
 	cmdflags.Parse([]string{})
 	cmdflags.PrintDefaults()
 }

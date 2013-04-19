@@ -152,7 +152,7 @@ func (t *Timer) Duration() time.Duration {
 
 func (project *Project) CreateEntry(content string, billable bool) *Entry {
 	content = strings.Trim(content, " \n\t\r")
-	tags := make([]string, 20)
+	tags := make([]string, 0, 20)
 
 	tagsFinder := regexp.MustCompile("\\B#(\\w\\w+)")
 	for _, v := range tagsFinder.FindAllStringSubmatch(content, 20) {
