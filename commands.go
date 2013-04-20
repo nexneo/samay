@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/nexneo/samay/data"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -143,13 +144,14 @@ func moveProject(project *data.Project) (err error) {
 	return nil
 }
 
-func report(project *data.Project) (err error) {
-	if month > 0 && month < 13 {
-		data.PrintStatus(month)
-	} else {
-		err = fmt.Errorf("Month %d is not valid", month)
-	}
-	return
+func report(project *data.Project) error {
+	http.Handle("/",
+		http.FileServer(http.Dir("./public")),
+	)
+	time.AfterFunc(time.Duration(1*time.Microsecond), func() {
+		exec.Command("open", "http://localhost:8080/").Run()
+	})
+	return http.ListenAndServe(":8080", nil)
 }
 
 func logProject(project *data.Project) error {
