@@ -153,30 +153,7 @@ func report(project *data.Project) (err error) {
 }
 
 func logProject(project *data.Project) error {
-	entries := project.Entries()
-	fmt.Println("\n #  Hours  Description\n -  -----  -----------")
-	printHeader := func(ty *time.Time) {
-		fmt.Printf("           - %d/%.2d -\n", ty.Month(), ty.Day())
-	}
-	var day int
-	for i, entry := range entries {
-		if i > 30 {
-			break
-		}
-
-		ty, err := entry.EndedTime()
-		if err == nil && day != ty.Day() {
-			printHeader(ty)
-			day = ty.Day()
-		}
-
-		fmt.Printf("%2d %s  %.54s", i, entry.HoursMins(), entry.GetContent())
-		if len(entry.GetContent()) > 54 {
-			fmt.Print("...")
-		}
-		fmt.Println("")
-	}
-	fmt.Println()
+	data.PrintProjectLog(project)
 	return nil
 }
 

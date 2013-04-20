@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os" 
+	"os"
 	"sort"
 	"time"
 )
@@ -33,6 +33,14 @@ func UUID() (uuid string, err error) {
 		b[0:4], b[4:6], b[6:8], b[8:10], b[10:],
 	)
 	return
+}
+
+func Bold(str string) string {
+	return fmt.Sprintf("\033[1m%s\033[0m", str)
+}
+
+func Color(color, str string) string {
+	return fmt.Sprintf("\033[%sm%s\033[0m", color, str)
 }
 
 func TimestampToTime(timestamp *int64) (*time.Time, error) {

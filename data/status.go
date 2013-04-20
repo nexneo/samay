@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"time"
+	"github.com/nexneo/samay/util"
 )
 
 var (
@@ -69,6 +70,10 @@ func hoursMinsFromDuration(d time.Duration) (ret hoursMins) {
 	return
 }
 
+func HmFromD(d time.Duration) hoursMins {
+	return hoursMinsFromDuration(d)
+}
+
 // consistent string presentation of hoursMins
 func (hm hoursMins) String() string {
 	return fmt.Sprintf("%3d:%02d", hm.hours, hm.mins)
@@ -80,6 +85,51 @@ func repeatChar(c string, length int) (ret string) {
 		ret += c
 	}
 	return
+}
+
+func PrintProjectLog(project *Project) {
+	printHeader := func(ty *time.Time) {
+		headerStr := "           "
+		if time.Now().Day() == ty.Day() {
+			headerStr = fmt.Sprintf("%s%s \n", headerStr, "Today")
+		} else {
+			headerStr = fmt.Sprintf("%s%.2d/%.2d \n", headerStr, ty.Month(), ty.Day())
+		}
+
+		fmt.Print(util.Color("37", headerStr))
+	}
+
+	printTotal := func(total int64) {
+		if total != 0 {
+			hm := HmFromD(time.Duration(total))
+			fmt.Printf("%18s\n", util.Color("32", hm.String()))
+		}
+	}
+
+	var day int
+	var total int64
+	fmt.Println(util.Color("33", "\n #  Hours  Date | Description"))
+
+	for i, entry := range project.Entries() {
+		if i > 30 {
+			break
+		}
+		ty, err := entry.EndedTime()
+		if err == nil && day != ty.Day() {
+			printTotal(total)
+			printHeader(ty)
+			day = ty.Day()
+			total = 0
+		}
+		total = total + *entry.Duration
+		fmt.Printf("%2d %s  %.54s", i, entry.HoursMins(), entry.GetContent())
+		if len(entry.GetContent()) > 54 {
+			fmt.Print("...")
+		}
+		fmt.Println("")
+	}
+	printTotal(total)
+	fmt.Println()
 }
 
 func PrintStatus(month int) {
