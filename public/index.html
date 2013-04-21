@@ -46,17 +46,36 @@
             </div>
         </div>
 
-        <div class="container">
-
+        <div class="container" ng-controller="SamayHomeCtrl">
+            <div class="row"><h3>Projects</h3></div>
             <!-- Example row of columns -->
             <div class="row">
-                <div class="span4">
-                    <h2>Heading</h2>
-                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-                    <p><a class="btn" href="#">View details &raquo;</a></p>
-                </div>
+                <ul class="nav nav-tabs">
+                    <li ng-repeat="project in projects" class="{{project.activecls}}">
+                        <a href="#" ng-click="activate(project)">{{project.name}}</a>
+                    </li>
+                </ul>
             </div>
-
+            <div class="row">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Hours</th>
+                            <th>Content</th>
+                            <th>Tags</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="entry in activeProject.entries">
+                            <td>{{$index}}</td>
+                            <td>{{entry.duration}}</td>
+                            <td>{{entry.content}}</td>
+                            <td>{{entry.tags}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <hr>
 
             <footer>
