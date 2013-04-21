@@ -2,6 +2,7 @@ package data
 
 import (
 	"code.google.com/p/goprotobuf/proto"
+	
 	"io/ioutil"
 	"os"
 )
