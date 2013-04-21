@@ -4,19 +4,15 @@
    Author's custom styles
    ========================================================================== */
 
+body {
+   padding-top: 60px;
+   padding-bottom: 40px;
+}
 
+th.hoursmins,td.hoursmins{
+   text-align: right;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+tr.entry .date{
+   color: #bbb;
+}
