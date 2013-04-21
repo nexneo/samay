@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="no-js" ng-app>
+<html class="no-js" ng-app="samay">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -13,11 +13,18 @@
                 padding-top: 60px;
                 padding-bottom: 40px;
             }
+            td.hoursmins{
+                text-align: right;
+            }
+            tr.entry .date{
+                color: #bbb;
+            }
         </style>
         <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
         <link rel="stylesheet" href="css/main.css">
 
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.1.4/angular.min.js"></script>
+        <script src="/js/vendor/moment.min.js"></script>
         <script src="js/main.js"></script>
 
     </head>
@@ -57,21 +64,38 @@
                 </ul>
             </div>
             <div class="row">
-                <table class="table">
+                <table class="table table-hover">
+                    <col width="3">
+                    <col width="90">
+                    <col width="60%">
+                    <col width="40%">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Hours</th>
+                            <th class="hoursmins">Hours</th>
                             <th>Content</th>
                             <th>Tags</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="entry in activeProject.entries">
+                        <tr ng-repeat="entry in activeProject.entries" class="entry">
                             <td>{{$index}}</td>
-                            <td>{{entry.duration}}</td>
-                            <td>{{entry.content}}</td>
-                            <td>{{entry.tags}}</td>
+                            <td class="hoursmins">{{entry.hours | hoursmins }}</td>
+                            <td class="content">
+                                {{entry.content}}
+                                <br>
+                                <small class="date">{{entry.ended | prettydate }}</small>
+                            </td>
+                            <td>
+                                <span ng-repeat="tag in entry.tags | filter:notEmpty ">
+                                    <span class="label">{{tag}}</span>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="info">
+                            <td></td>
+                            <td class="hoursmins">{{totalHours() | hoursmins }}</td>
+                            <td colspan="2">Total</td>
                         </tr>
                     </tbody>
                 </table>
