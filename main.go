@@ -71,7 +71,7 @@ func parseFlags() {
 		}
 	}
 
-	if name == "" && cmd != "report" {
+	if name == "" && cmd != "report" && cmd != "web" {
 		log.Println("Error: Project name required.\n")
 		usage()
 		os.Exit(0)
