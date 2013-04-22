@@ -1,0 +1,8 @@
+<div class="row"><h3>{{title}}</h3></div>
+<div class="row">
+    <ul class="nav nav-tabs projects">
+        <li ng-repeat="project in projects">
+            <a ng-href="#/projects/{{project.sha}}">{{project.name}}</a>
+        </li>
+    </ul>
+</div>

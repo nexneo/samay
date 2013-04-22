@@ -1,0 +1,56 @@
+<div class="row"><h3>{{title}}</h3></div>
+<div class="row">
+    <ul class="nav nav-tabs projects">
+        <li ng-repeat="project in projects" class="{{project | isactive:activeProject }}">
+            <a ng-href="#/projects/{{project.sha}}">{{project.name}}</a>
+        </li>
+    </ul>
+</div>
+<div class="row">
+    <div class="meter">
+        <div ng-repeat="ty in meterTypes" 
+             class="{{ty}}" 
+             style="width:{{meter(ty)}}%">
+         </div>
+    </div>
+    <table class="table table-hover">
+        <col width="2%">
+        <col width="3%">
+        <col width="60%">
+        <col width="10%">
+        <col width="25%">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th class="hoursmins">Hours</th>
+                <th>Content</th>
+                <th>Category</th>
+                <th>Tags</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="entry in activeProject.entries" class="entry">
+                <td>{{$index}}</td>
+                <td class="hoursmins">{{entry.hours | hoursmins}}</td>
+                <td class="content">
+                    <a ng-href="#/projects/{{activeProject.sha}}/entries/{{entry.id}}">{{entry.content}}</a>
+                    <br>
+                    <small class="date">{{entry.ended | prettydate}}</small>
+                </td>
+                <td>
+                    {{entry.type}}
+                </td>
+                <td>
+                    <span ng-repeat="tag in entry.tags | filter:notEmpty ">
+                        <span class="label">{{tag}}</span>
+                    </span>
+                </td>
+            </tr>
+            <tr class="info">
+                <td></td>
+                <td class="hoursmins">{{totalHours() | hoursmins }}</td>
+                <td colspan="3">Total</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

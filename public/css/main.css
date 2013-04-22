@@ -16,3 +16,23 @@ th.hoursmins,td.hoursmins{
 tr.entry .date{
    color: #bbb;
 }
+
+.nav-tabs {
+   cursor: pointer;
+}
+
+.meter * {
+	height: 2px;
+	float: left;
+}
+.meter .fun{
+	background-color: #008500;
+}
+
+.meter .work{
+	background-color: #67e667;
+}
+
+.meter .chore{
+	background-color: #ff4040;
+}

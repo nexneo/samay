@@ -21,7 +21,7 @@
             <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
 
-        <div class="navbar navbar-inverse navbar-fixed-top">
+        <!--<div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
                 <div class="container">
                     <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
@@ -36,62 +36,18 @@
                             <li><a href="#about">About</a></li>
                             <li><a href="#contact">Contact</a></li>
                         </ul>
-                    </div><!--/.nav-collapse -->
+                    </div>
                 </div>
             </div>
-        </div>
+        </div>-->
 
-        <div class="container" ng-controller="SamayHomeCtrl">
-            <div class="row"><h3>Projects</h3></div>
-            <!-- Example row of columns -->
-            <div class="row">
-                <ul class="nav nav-tabs">
-                    <li ng-repeat="project in projects" class="{{project.activecls}}">
-                        <a href="#" ng-click="activate(project)">{{project.name}}</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="row">
-                <table class="table table-hover">
-                    <col width="2%">
-                    <col width="3%">
-                    <col width="70%">
-                    <col width="25%">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th class="hoursmins">Hours</th>
-                            <th>Content</th>
-                            <th>Tags</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="entry in activeProject.entries" class="entry">
-                            <td>{{$index}}</td>
-                            <td class="hoursmins">{{entry.hours | hoursmins }}</td>
-                            <td class="content">
-                                {{entry.content}}
-                                <br>
-                                <small class="date">{{entry.ended | prettydate }}</small>
-                            </td>
-                            <td>
-                                <span ng-repeat="tag in entry.tags | filter:notEmpty ">
-                                    <span class="label">{{tag}}</span>
-                                </span>
-                            </td>
-                        </tr>
-                        <tr class="info">
-                            <td></td>
-                            <td class="hoursmins">{{totalHours() | hoursmins }}</td>
-                            <td colspan="2">Total</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="container">
+            <div ng-view>
             </div>
             <hr>
 
             <footer>
-                <p>&copy; You 2012</p>
+                
             </footer>
 
         </div> <!-- /container -->

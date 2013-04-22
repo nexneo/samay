@@ -1,0 +1,16 @@
+<div class="row"><h3>Edit</h3></div>
+<div class="row">
+	<form>
+		<fieldset>
+			<label for="">Entry</label>
+			<textarea ng-model="entry.content" cols="50" rows="3"></textarea>
+			<label for="">Hours</label>
+			<input type="text" value="{{entry.hours | hoursmins }}" disabled=disabled/>
+			<label for="">Tags</label>
+			<input type="text" ng-model="entry.tags" ng-list/>
+			<label for="">Category</label>
+			<select ng-model="entry.type" ng-options="c for c in categories"></select>
+		</fieldset>
+	</form>
+	<a ng-href="#/projects/{{project.sha}}" class="btn">Save</a>
+</div>

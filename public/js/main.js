@@ -11,53 +11,113 @@ filter('prettydate', function() {
 	return function(input){
 		return moment.unix(input).format("MMM Do, hA");
 	};
+}).
+filter('isactive', function() {
+	return function(input, compareTo){
+		if(input == compareTo){
+			return "active"
+		}
+		return ""
+	};
 });
 
 
-
-angular.module('samay', ['samay.filter']);
-
-
-function SamayHomeCtrl($scope, $http){
-	function DecoEntries(entries) {
-		for (var i = entries.length - 1; i >= 0; i--) {
-			entries[i]['hours'] = moment.duration(entries[i].duration/1000000);
-		}
-		return entries;
-	}
-
-	$scope.notEmpty = function (str) {
-		return str != "";
-	}
-
-	$http.get("/app.json").success(function(data){
+angular.module('samay', ['samay.filter']).
+config(function($routeProvider){
+	$routeProvider.
+		when("/projects", {controller:ProjectsCtrl, templateUrl:"partials/projects.html"}).
+		when("/projects/:projectSha", {controller:ProjectCtrl, templateUrl:"partials/project.html"}).
+		when("/projects/:projectSha/entries/:entryId", {controller:EntryCtrl, templateUrl:"partials/entry.html"}).
+		otherwise({redirectTo: "/projects"});
+}).
+factory("projects", function($http, $route){
+	var ret = [];
+	function process (data) {
 		var projects = [];
 		for (var i = data.length - 1; i >= 0; i--) {
 			project = data[i]['project'];
 			project['entries'] = DecoEntries(data[i]['entries']);
 			projects[i] = project;
 		}
-		$scope.projects = projects;
-		$scope.activate($scope.projects[0])
+		return projects;
+	}
+
+	function DecoEntries(entries) {
+		for (var i = entries.length - 1; i >= 0; i--) {
+			entries[i]['type'] = 'work';
+			entries[i]['hours'] = moment.duration(entries[i].duration/1000000);
+		}
+		return entries;
+	}
+
+	$http.get("/app.json").success(function(data){
+		angular.copy(process(data), ret);
+		$route.reload();
 	});
 
-	$scope.activate = function(project) {
-		angular.forEach($scope.projects, function(p){
-			p.activecls = "";
-		})
-		project.activecls = "active";
-		$scope.activeProject = project;
-	};
+	return ret;
+});
+
+function EntryCtrl($scope, $routeParams, projects) {
+	$scope.title = "Entry";
+	$scope.projectSha = $routeParams.projectSha;
+	$scope.entryId = $routeParams.entryId;
+	$scope.categories = ['fun','work','chore'];
+
+	angular.forEach(projects, function(p){
+		if (p.sha === $scope.projectSha){
+			$scope.project = p;
+			angular.forEach(p.entries, function(e){
+				if(e.id === $scope.entryId){
+					$scope.entry = e;
+				}
+			})
+		}
+	});
+}
+
+function ProjectCtrl($scope, $routeParams, projects){
+	$scope.title = "Projects";
+	$scope.projects = projects;
+
+	$scope.projectSha = $routeParams.projectSha;
+
+	angular.forEach(projects, function(p){
+		if (p.sha === $scope.projectSha){
+			$scope.activeProject = p;
+		}
+	});
 
 	$scope.totalHours = function (){
 		if($scope.activeProject === undefined){
 			return moment.duration(0);
 		}
-		
+
 		var ret = 0;
 		angular.forEach($scope.activeProject.entries, function(e){
 			ret += e.duration;
 		});
-		return moment.duration(ret/1000000)
-	}
+		return moment.duration(ret/1000000);
+	};
+
+	$scope.meterTypes = ["fun", "work", "chore"];
+
+	$scope.meter = function(type) {
+		if($scope.activeProject === undefined){
+			return 0;
+		}
+
+		var entries = $scope.activeProject.entries;
+		var sum = 0;
+		angular.forEach(entries, function(e){
+			if(e.type===type){sum = sum + 1;}
+		});
+		return Math.floor((sum/entries.length)*100);
+		
+	};
+}
+
+function ProjectsCtrl($scope, projects){
+	$scope.title = "Projects";
+	$scope.projects = projects;
 }
