@@ -5,3 +5,7 @@
 .projects{
 	display: none;
 }
+
+.meter {
+	display: none !important;
+}

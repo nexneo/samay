@@ -40,7 +40,7 @@
                     <small class="date">{{entry.ended | prettydate}}</small>
                 </td>
                 <td class="pagination pagination-mini no-print">
-                    <ul>
+                    <ul class="changetype">
                         <li ng-repeat="c in categories" class="{{c.code | isactive:entry.type }}">
                             <a href="" ng-click="changeType(entry, c)">{{c.name}}</a>
                         </li>

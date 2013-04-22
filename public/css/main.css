@@ -4,11 +4,6 @@
    Author's custom styles
    ========================================================================== */
 
-body {
-   /*padding-top: 60px;*/
-   padding-bottom: 40px;
-}
-
 th.hoursmins,td.hoursmins{
    text-align: right;
 }
@@ -25,6 +20,7 @@ tr.entry .date{
 	height: 2px;
 	float: left;
 }
+
 .meter .fun{
 	background-color: #008500;
 }
@@ -35,4 +31,8 @@ tr.entry .date{
 
 .meter .chore{
 	background-color: #ff4040;
+}
+
+@media(max-width:979px){
+   ul.changetype{display: none;}
 }
