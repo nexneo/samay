@@ -1,4 +1,4 @@
-<div class="row"><h3>{{title}}</h3></div>
+<h3>{{activeProject.name}}</h3>
 <div class="row">
     <ul class="nav nav-tabs projects">
         <li ng-repeat="project in projects" class="{{project | isactive:activeProject }}">
@@ -17,15 +17,15 @@
         <col width="2%">
         <col width="5%">
         <col width="55%">
-        <col width="">
+        <col>
         <col width="20%">
         <thead>
             <tr>
                 <th>#</th>
                 <th class="hoursmins">Hours</th>
                 <th>Content</th>
-                <th></th>
-                <th>Tags</th>
+                <th class="no-print"></th>
+                <th class="no-print">Tags</th>
             </tr>
         </thead>
         <tbody>
@@ -39,14 +39,14 @@
                     <br>
                     <small class="date">{{entry.ended | prettydate}}</small>
                 </td>
-                <td class="pagination pagination-mini">
+                <td class="pagination pagination-mini no-print">
                     <ul>
                         <li ng-repeat="c in categories" class="{{c.code | isactive:entry.type }}">
                             <a href="" ng-click="changeType(entry, c)">{{c.name}}</a>
                         </li>
                     </ul>
                 </td>
-                <td>
+                <td class="no-print">
                     <span ng-repeat="tag in entry.tags | filter:notEmpty ">
                         <span class="label">{{tag}}</span>
                     </span>
@@ -55,7 +55,8 @@
             <tr class="info">
                 <td></td>
                 <td class="hoursmins">{{totalHours() | hoursmins }}</td>
-                <td colspan="3">Total</td>
+                <td><strong>Total</strong></td>
+                <td class="no-print" colspan="2"></td>
             </tr>
         </tbody>
     </table>
