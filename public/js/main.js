@@ -137,7 +137,10 @@ function ProjectCtrl($scope, $routeParams, projects){
 	};
 }
 
-function ProjectsCtrl($scope, projects){
+function ProjectsCtrl($scope, projects, $location){
 	$scope.title = "Projects";
 	$scope.projects = projects;
+	if (projects.length > 0) {
+		$location.path("/projects/"+projects[0].sha);
+	}
 }
