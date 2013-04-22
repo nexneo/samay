@@ -79,6 +79,7 @@ function EntryCtrl($scope, $routeParams, projects) {
 function ProjectCtrl($scope, $routeParams, projects){
 	$scope.title = "Projects";
 	$scope.projects = projects;
+	$scope.categories = ['fun','work','chore'];
 
 	$scope.projectSha = $routeParams.projectSha;
 
@@ -87,6 +88,10 @@ function ProjectCtrl($scope, $routeParams, projects){
 			$scope.activeProject = p;
 		}
 	});
+
+	$scope.changeType = function(entry, c){
+		entry.type = c;
+	}
 
 	$scope.totalHours = function (){
 		if($scope.activeProject === undefined){

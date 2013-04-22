@@ -38,7 +38,13 @@
                     <small class="date">{{entry.ended | prettydate}}</small>
                 </td>
                 <td>
-                    {{entry.type}}
+                    <div class="btn-group">
+                        <button ng-click="changeType(entry, c)" 
+                                class="btn btn-mini {{c | isactive:entry.type }}" 
+                                ng-repeat="c in categories">
+                            {{c}}
+                        </a>
+                    </div>
                 </td>
                 <td>
                     <span ng-repeat="tag in entry.tags | filter:notEmpty ">
