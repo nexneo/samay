@@ -10,6 +10,11 @@
 			<input type="text" ng-model="entry.tags" ng-list/>
 			<label for="">Category</label>
 			<select ng-model="entry.type" ng-options="c.code as c.name for c in categories"></select>
+			<label class="checkbox">
+				<input type="checkbox" ng-model="entry.billable"> 
+				Billable
+			</label>
+			
 		</fieldset>
 	</form>
 	<a ng-href="#/projects/{{project.sha}}" class="btn">Save</a>

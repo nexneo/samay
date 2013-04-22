@@ -12,6 +12,15 @@ filter('prettydate', function() {
 		return moment.unix(input).format("MMM Do, hA");
 	};
 }).
+filter('star', function() {
+	return function(input, reverse){
+		if(reverse){
+			return (input ? "" : "*");	
+		}else{
+			return (input ? "*" : "");	
+		}
+	};
+}).
 filter('isactive', function() {
 	return function(input, compareTo){
 		if(input == compareTo){

@@ -15,7 +15,7 @@
     </div>
     <table class="table table-hover">
         <col width="2%">
-        <col width="3%">
+        <col width="5%">
         <col width="55%">
         <col width="">
         <col width="20%">
@@ -31,7 +31,9 @@
         <tbody>
             <tr ng-repeat="entry in activeProject.entries" class="entry">
                 <td>{{$index}}</td>
-                <td class="hoursmins">{{entry.hours | hoursmins}}</td>
+                <td class="hoursmins">
+                    {{entry.billable | star:true}}&nbsp;{{entry.hours | hoursmins}}
+                </td>
                 <td class="content">
                     <a ng-href="#/projects/{{activeProject.sha}}/entries/{{entry.id}}">{{entry.content}}</a>
                     <br>
