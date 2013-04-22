@@ -8,23 +8,23 @@
 </div>
 <div class="row">
     <div class="meter">
-        <div ng-repeat="ty in meterTypes" 
-             class="{{ty}}" 
-             style="width:{{meter(ty)}}%">
+        <div ng-repeat="ty in categories" 
+             class="{{ty.name | lowercase }}" 
+             style="width:{{meter(ty.code)}}%">
          </div>
     </div>
     <table class="table table-hover">
         <col width="2%">
         <col width="3%">
-        <col width="60%">
-        <col width="10%">
-        <col width="25%">
+        <col width="55%">
+        <col width="">
+        <col width="20%">
         <thead>
             <tr>
                 <th>#</th>
                 <th class="hoursmins">Hours</th>
                 <th>Content</th>
-                <th>Category</th>
+                <th></th>
                 <th>Tags</th>
             </tr>
         </thead>
@@ -37,14 +37,12 @@
                     <br>
                     <small class="date">{{entry.ended | prettydate}}</small>
                 </td>
-                <td>
-                    <div class="btn-group">
-                        <button ng-click="changeType(entry, c)" 
-                                class="btn btn-mini {{c | isactive:entry.type }}" 
-                                ng-repeat="c in categories">
-                            {{c}}
-                        </a>
-                    </div>
+                <td class="pagination pagination-mini">
+                    <ul>
+                        <li ng-repeat="c in categories" class="{{c.code | isactive:entry.type }}">
+                            <a href="" ng-click="changeType(entry, c)">{{c.name}}</a>
+                        </li>
+                    </ul>
                 </td>
                 <td>
                     <span ng-repeat="tag in entry.tags | filter:notEmpty ">

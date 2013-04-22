@@ -44,7 +44,7 @@ factory("projects", function($http, $route){
 
 	function DecoEntries(entries) {
 		for (var i = entries.length - 1; i >= 0; i--) {
-			entries[i]['type'] = 'work';
+			entries[i]['type'] = 2;
 			entries[i]['hours'] = moment.duration(entries[i].duration/1000000);
 		}
 		return entries;
@@ -62,7 +62,11 @@ function EntryCtrl($scope, $routeParams, projects) {
 	$scope.title = "Entry";
 	$scope.projectSha = $routeParams.projectSha;
 	$scope.entryId = $routeParams.entryId;
-	$scope.categories = ['fun','work','chore'];
+	$scope.categories = [
+		{code:1, name:"Fun"},
+		{code:2, name:"Work"},
+		{code:0, name:"Chore"}
+	];
 
 	angular.forEach(projects, function(p){
 		if (p.sha === $scope.projectSha){
@@ -79,7 +83,11 @@ function EntryCtrl($scope, $routeParams, projects) {
 function ProjectCtrl($scope, $routeParams, projects){
 	$scope.title = "Projects";
 	$scope.projects = projects;
-	$scope.categories = ['fun','work','chore'];
+	$scope.categories = [
+		{code:1, name:"Fun"},
+		{code:2, name:"Work"},
+		{code:0, name:"Chore"}
+	];
 
 	$scope.projectSha = $routeParams.projectSha;
 
@@ -90,7 +98,7 @@ function ProjectCtrl($scope, $routeParams, projects){
 	});
 
 	$scope.changeType = function(entry, c){
-		entry.type = c;
+		entry.type = c.code;
 	}
 
 	$scope.totalHours = function (){
@@ -104,8 +112,6 @@ function ProjectCtrl($scope, $routeParams, projects){
 		});
 		return moment.duration(ret/1000000);
 	};
-
-	$scope.meterTypes = ["fun", "work", "chore"];
 
 	$scope.meter = function(type) {
 		if($scope.activeProject === undefined){

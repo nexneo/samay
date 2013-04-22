@@ -9,7 +9,7 @@
 			<label for="">Tags</label>
 			<input type="text" ng-model="entry.tags" ng-list/>
 			<label for="">Category</label>
-			<select ng-model="entry.type" ng-options="c for c in categories"></select>
+			<select ng-model="entry.type" ng-options="c.code as c.name for c in categories"></select>
 		</fieldset>
 	</form>
 	<a ng-href="#/projects/{{project.sha}}" class="btn">Save</a>
