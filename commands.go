@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code.google.com/p/goprotobuf/proto"
 	"encoding/json"
 	"fmt"
 	"github.com/nexneo/samay/data"
@@ -174,6 +175,7 @@ func appJson(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	projects := make([]*ProjectSet, 0, 20)
 	for _, project := range data.DB.Projects() {
+		project.Sha = proto.String(project.GetShaFromName())
 		projects = append(projects, &ProjectSet{project, project.Entries()})
 	}
 	by, err := json.Marshal(projects)
