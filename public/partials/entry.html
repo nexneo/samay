@@ -1,21 +1,24 @@
-<h3>Edit Entry</h3>
 <div class="row">
-	<form>
-		<fieldset>
-			<label for="">Entry</label>
-			<textarea ng-model="entry.content" cols="50" rows="3" required></textarea>
-			<label for="">Hours</label>
-			<input type="text" value="{{entry.hours | hoursmins }}" disabled=disabled/>
-			<label for="">Tags</label>
-			<input type="text" ng-model="entry.tags" ng-list/>
-			<label for="">Category</label>
-			<select ng-model="entry.type" ng-options="c.code as c.name for c in categories"></select>
-			<label class="checkbox">
-				<input type="checkbox" ng-model="entry.billable"> 
-				Billable
-			</label>
-			
-		</fieldset>
-	</form>
-	<a ng-href="#/projects/{{project.sha}}" class="btn">Save</a>
+	<div class="span1"></div>
+	<div class="span6">
+		<h3>Edit Entry</h3>
+		<form>
+			<fieldset>
+				<label for="">Entry</label>
+				<textarea ng-model="entry.content" cols="50" rows="3" required></textarea>
+				<label for="">Hours</label>
+				<input type="text" value="{{entry.hours | hoursmins }}" disabled=disabled/>
+				<label for="">Tags</label>
+				<input type="text" ng-model="entry.tags" ng-list/>
+				<label for="">Category</label>
+				<select ng-model="entry.type" ng-options="c.code as c.name for c in categories"></select>
+				<label class="checkbox">
+					<input type="checkbox" ng-model="entry.billable"> 
+					Billable
+				</label>
+				
+			</fieldset>
+		</form>
+		<a ng-href="#/projects/{{project.sha}}" class="btn">Save</a>
+	</div>
 </div>
