@@ -2,19 +2,33 @@ package web
 
 import (
 	"code.google.com/p/goprotobuf/proto"
+	"code.google.com/p/gorilla/mux"
 	"encoding/json"
+	"fmt"
 	"github.com/nexneo/samay/data"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
 )
 
+var (
+	router *mux.Router
+)
+
+func init() {
+	router = mux.NewRouter()
+	router.HandleFunc("/projects", index)
+	router.HandleFunc("/entries/{id}", update)
+	router.Handle("/", router.NotFoundHandler)
+}
+
 func StartServer() error {
-	http.Handle("/",
-		http.FileServer(http.Dir("./public")),
-	)
-	http.HandleFunc("/app.json", appJson)
-	go exec.Command("open", "http://localhost:8080/").Run()
+	http.Handle("/", router)
+	http.Handle("/app/",
+		http.StripPrefix("/app/", http.FileServer(http.Dir("./public"))))
+	url := "http://localhost:8080/app/"
+	go exec.Command("open", url).Run()
+	fmt.Printf("starting %s\n", url)
 	return http.ListenAndServe(":8080", nil)
 }
 
@@ -23,16 +37,36 @@ type ProjectSet struct {
 	Entries []*data.Entry `json:"entries"`
 }
 
-func appJson(w http.ResponseWriter, req *http.Request) {
+func index(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	projects := make([]*ProjectSet, 0, 20)
 	for _, project := range data.DB.Projects() {
 		project.Sha = proto.String(project.GetShaFromName())
 		projects = append(projects, &ProjectSet{project, project.Entries()})
 	}
-	by, err := json.Marshal(projects)
+
+	b, err := json.Marshal(projects)
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	io.WriteString(w, string(by))
+
+	fmt.Fprint(w, string(b))
+}
+
+func update(w http.ResponseWriter, req *http.Request) {
+	fmt.Println(req.URL.Path)
+	w.Header().Set("Content-Type", "application/json")
+	entry := &data.Entry{}
+
+	b, _ := ioutil.ReadAll(req.Body)
+	fmt.Println(string(b))
+	json.Unmarshal(b, entry)
+
+	if err := data.Update(entry); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
 }

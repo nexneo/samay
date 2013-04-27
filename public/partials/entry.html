@@ -1,24 +1,37 @@
 <div class="row">
-	<div class="span1"></div>
-	<div class="span6">
-		<h3>Edit Entry</h3>
-		<form>
-			<fieldset>
-				<label for="">Entry</label>
-				<textarea ng-model="entry.content" cols="50" rows="3" required></textarea>
-				<label for="">Hours</label>
-				<input type="text" value="{{entry.hours | hoursmins }}" disabled=disabled/>
-				<label for="">Tags</label>
-				<input type="text" ng-model="entry.tags" ng-list/>
-				<label for="">Category</label>
-				<select ng-model="entry.type" ng-options="c.code as c.name for c in categories"></select>
-				<label class="checkbox">
-					<input type="checkbox" ng-model="entry.billable"> 
-					Billable
-				</label>
-				
-			</fieldset>
-		</form>
-		<a ng-href="#/projects/{{project.sha}}" class="btn">Save</a>
+	<div class="span12">
+		<br>
+		<ul class="breadcrumb">
+		  <li><a href="#">Home</a> <span class="divider">/</span></li>
+		  <li>
+		  	<a ng-href="#/projects/{{project.sha}}">{{project.name}}</a> 
+		  	<span class="divider">/</span>
+		  </li>
+		  <li class="active">{{entry.id}}</li>
+		</ul>
+		<h4>{{entry.hours | hoursmins}} hours</h4>
 	</div>
+</div>
+<div class="row">
+	<form class="span12">
+		<fieldset>
+			<textarea ng-model="entry.content" rows="5" class="span9" required></textarea>
+			<div class="input-prepend">
+			  <span class="add-on">Tags</span>
+			  <input type="text" ng-model="entry.tags" ng-list>
+			</div>
+			<label class="checkbox">
+				<input type="checkbox" ng-model="entry.billable"> 
+				Billable
+			</label>
+			<div class="pagination pagination">
+			    <ul class="changetype">
+			        <li ng-repeat="c in categories" class="{{c.code | isactive:entry.type }}">
+			            <a href="" ng-click="changeType(entry, c)">{{c.name}}</a>
+			        </li>
+			    </ul>
+			</div>
+		</fieldset>
+		<a ng-href="#/projects/{{project.sha}}" ng-click="done()" class="btn">Done</a>
+	</form>
 </div>

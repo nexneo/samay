@@ -2,7 +2,7 @@ package data
 
 import (
 	"code.google.com/p/goprotobuf/proto"
-	
+
 	"io/ioutil"
 	"os"
 )
@@ -15,6 +15,10 @@ func Save(ps Persistable) error {
 	}
 
 	return err
+}
+
+func Update(ps Persistable) error {
+	return write(ps)
 }
 
 func Persisted(ps Persistable) bool {
