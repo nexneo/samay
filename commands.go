@@ -32,21 +32,11 @@ var (
 )
 
 func startTimer(project *data.Project) (err error) {
-	data.Save(project)
-	timer := data.CreateTimer(project)
-	err = data.Save(timer)
-	return
+	return project.StartTimer()
 }
 
 func stopTimer(project *data.Project) (err error) {
-	if yes, timer := project.OnClock(); yes {
-		entry := project.CreateEntry(getContent(), billable)
-
-		if err = timer.Stop(entry); err == nil {
-			fmt.Printf("%.2f mins\n", entry.Minutes())
-		}
-	}
-	return
+	return project.StopTimer(getContent(), billable)
 }
 
 func addEntry(project *data.Project) (err error) {

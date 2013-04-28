@@ -24,9 +24,12 @@ func init() {
 
 func StartServer() error {
 	http.Handle("/", router)
-	http.Handle("/app/",
-		http.StripPrefix("/app/", http.FileServer(http.Dir("./public"))))
-	url := "http://localhost:8080/app/"
+	http.Handle("/a/",
+		http.StripPrefix(
+			"/a/", http.FileServer(http.Dir("./public")),
+		),
+	)
+	url := "http://localhost:8080/a/"
 	go exec.Command("open", url).Run()
 	fmt.Printf("starting %s\n", url)
 	return http.ListenAndServe(":8080", nil)
@@ -60,8 +63,11 @@ func update(w http.ResponseWriter, req *http.Request) {
 	entry := &data.Entry{}
 
 	b, _ := ioutil.ReadAll(req.Body)
-	fmt.Println(string(b))
-	json.Unmarshal(b, entry)
+
+	if err := json.Unmarshal(b, entry); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if err := data.Update(entry); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

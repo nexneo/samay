@@ -187,6 +187,24 @@ func (project *Project) CreateEntryWithDuration(
 	return e
 }
 
+func (project *Project) StopTimer(c string, bill bool) (err error) {
+	if yes, timer := project.OnClock(); yes {
+		entry := project.CreateEntry(c, bill)
+
+		if err = timer.Stop(entry); err == nil {
+			fmt.Printf("%.2f mins\n", entry.Minutes())
+		}
+	}
+	return
+}
+
+func (project *Project) StartTimer() (err error) {
+	Save(project)
+	timer := CreateTimer(project)
+	err = Save(timer)
+	return
+}
+
 func (e *Entry) prepareForSave() error {
 	if err := os.MkdirAll(DB.EntryDirPath(e), 0755); !os.IsExist(err) {
 		return err

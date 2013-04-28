@@ -72,7 +72,7 @@ func parseFlags() {
 	}
 
 	if name == "" && cmd != "report" && cmd != "web" {
-		log.Println("Error: Project name required.\n")
+		log.Print("Error: Project name required.\n\n")
 		usage()
 		os.Exit(0)
 	}
