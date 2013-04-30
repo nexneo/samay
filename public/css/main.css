@@ -36,3 +36,12 @@ tr.entry .date{
 @media(max-width:979px){
    ul.changetype{display: none;}
 }
+
+.label{
+   border: 1px solid #ccc;
+   color: #aaa;
+   text-shadow: none;
+   font-weight: normal;
+   background-color: transparent;
+   cursor: pointer;
+}

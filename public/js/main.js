@@ -116,16 +116,26 @@ function EntryCtrl($scope, $routeParams, $http, projects) {
 	}
 }
 
-function ProjectCtrl($scope, $routeParams, $http, projects) {
+function ProjectCtrl($scope, $routeParams, $http, $filter, projects) {
 	$scope.title = "Projects";
 	$scope.projects = projects;
 	$scope.categories = categories;
 
 	$scope.projectSha = $routeParams.projectSha;
 
+	$scope.filterByTag = function(tag){
+		$scope.filteredTag = tag;
+		if($scope.filteredTag !== ""){
+			$scope.entries = $filter('filter')($scope.activeProject.entries, {tags:[$scope.filteredTag]});
+		}else{
+			$scope.entries = $scope.activeProject.entries;
+		}
+	}
+
 	angular.forEach(projects, function(p) {
 		if (p.sha === $scope.projectSha) {
 			$scope.activeProject = p;
+			$scope.filterByTag("");
 		}
 	});
 
@@ -140,7 +150,7 @@ function ProjectCtrl($scope, $routeParams, $http, projects) {
 		}
 
 		var ret = 0;
-		angular.forEach($scope.activeProject.entries, function(e) {
+		angular.forEach($scope.entries, function(e) {
 			ret += e.duration;
 		});
 		return moment.duration(ret / 1000000);

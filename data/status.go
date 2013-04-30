@@ -2,8 +2,8 @@ package data
 
 import (
 	"fmt"
-	"time"
 	"github.com/nexneo/samay/util"
+	"time"
 )
 
 var (
