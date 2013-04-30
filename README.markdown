@@ -80,6 +80,26 @@ This will open editor window to enter log message.
 	$ samay report -r 3 
 	(here 3 is month e.g March)
 
+### Reporting with web interface
+
+	$ samay web
+
+This will open system web browser (on mac os x using `open`) 
+and show all projects in tabbed interface.
+
+[![Web interface 1][]][] [![Web interface 2][]][] [![Web interface 3][]][]
+
+  [Web interface 1]: http://farm9.staticflickr.com/8398/8695518062_bf79383b0e_m.jpg
+  [![Web interface 1][]]: http://www.flickr.com/photos/niket/8695518062/
+    "Web interface 1 by Niket Patel, on Flickr"
+  [Web interface 2]: http://farm9.staticflickr.com/8257/8695518054_5b81899b83_m.jpg
+  [![Web interface 2][]]: http://www.flickr.com/photos/niket/8695518054/
+    "Web interface 2 by Niket Patel, on Flickr"
+  [Web interface 3]: http://farm9.staticflickr.com/8537/8695518044_748e7073cd_m.jpg
+  [![Web interface 3][]]: http://www.flickr.com/photos/niket/8695518044/
+    "Web interface 3 by Niket Patel, on Flickr"
+
+
 ### To add non billable hours
 
 	$ samay stop -p "Project Name" -m "worked on Samay Readme" -bill false
