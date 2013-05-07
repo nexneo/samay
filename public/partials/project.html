@@ -42,6 +42,7 @@
                     <a ng-href="#/projects/{{activeProject.sha}}/entries/{{entry.id}}">
                         {{entry.content}}
                     </a>
+                    &nbsp;
                     <span ng-repeat="tag in entry.tags | filter:notEmpty ">
                         <span class="label" ng-click="filterByTag(tag)">{{tag}}</span>
                     </span>
