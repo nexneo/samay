@@ -8,11 +8,14 @@ import (
 	"github.com/nexneo/samay/data"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os/exec"
 )
 
 var (
 	router *mux.Router
+	proxy  *httputil.ReverseProxy
 )
 
 func init() {
@@ -20,16 +23,19 @@ func init() {
 	router.HandleFunc("/projects", index)
 	router.HandleFunc("/entries/{id}", update)
 	router.Handle("/", router.NotFoundHandler)
+
+	proxyurl, _ := url.Parse("https://s3.amazonaws.com/nexneo/samay/")
+	proxy = httputil.NewSingleHostReverseProxy(proxyurl)
 }
 
 func StartServer() error {
 	http.Handle("/", router)
 	http.Handle("/a/",
 		http.StripPrefix(
-			"/a/", http.FileServer(http.Dir("./public")),
+			"/a/", proxy,
 		),
 	)
-	url := "http://localhost:8080/a/"
+	url := "http://localhost:8080/a/index.html"
 	go exec.Command("open", url).Run()
 	fmt.Printf("starting %s\n", url)
 	return http.ListenAndServe(":8080", nil)
