@@ -28,17 +28,17 @@ func init() {
 	proxy = httputil.NewSingleHostReverseProxy(proxyurl)
 }
 
-func StartServer() error {
+func StartServer(port string) error {
 	http.Handle("/", router)
 	http.Handle("/a/",
 		http.StripPrefix(
 			"/a/", proxy,
 		),
 	)
-	url := "http://localhost:8080/a/index.html"
+	url := "http://localhost" + port + "/a/index.html"
 	go exec.Command("open", url).Run()
 	fmt.Printf("starting %s\n", url)
-	return http.ListenAndServe(":8080", nil)
+	return http.ListenAndServe(port, nil)
 }
 
 type ProjectSet struct {

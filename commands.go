@@ -145,7 +145,7 @@ func report(project *data.Project) (err error) {
 }
 
 func startweb(project *data.Project) error {
-	return web.StartServer()
+	return web.StartServer(httpPort)
 }
 
 func logProject(project *data.Project) error {

@@ -15,6 +15,7 @@ var (
 	name,
 	typ,
 	newName,
+	httpPort,
 	content string
 
 	billable bool
@@ -82,6 +83,7 @@ func parseFlags() {
 func initflags(cmd string) {
 	cmdflags = flag.NewFlagSet(cmd, flag.ExitOnError)
 	cmdflags.StringVar(&content, "m", "", "Description for entry")
+	cmdflags.StringVar(&httpPort, "port", ":8080", "HTTP Port")
 
 	cmdflags.IntVar(&month, "r", int(time.Now().Month()), "Report Month")
 	cmdflags.IntVar(&idx, "i", -1, "Entry index(#) in log")
