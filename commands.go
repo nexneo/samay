@@ -137,7 +137,7 @@ func moveProject(project *data.Project) (err error) {
 
 func report(project *data.Project) (err error) {
 	if month > 0 && month < 13 {
-		data.PrintStatus(month)
+		data.PrintProjectStatus(month)
 	} else {
 		err = fmt.Errorf("Month %d is not valid", month)
 	}

@@ -132,26 +132,19 @@ func PrintProjectLog(project *Project) {
 	fmt.Println()
 }
 
-func PrintStatus(month int) {
+func PrintProjectStatus(month int) {
 	statues := make(chan *ProjectStatus)
-	var counter, longest, size int
+	var counter int
 	now := time.Now()
 	scoppedMonth = month
 	for _, project := range DB.Projects() {
 		counter++
 		project.Status(statues)
-		if size = len(project.GetName()); size > longest {
-			longest = size
-		}
 	}
 
 	// if no projects nothing to do
 	if counter == 0 {
 		return
-	}
-
-	if (longest % 2) != 0 {
-		longest += 1
 	}
 
 	if scoppedMonth > int(now.Month()) {
@@ -160,40 +153,25 @@ func PrintStatus(month int) {
 		scoppedYear = now.Year()
 	}
 
-	printStatusHeader(longest)
+	fmt.Print(util.Color("33", "\n Hours   Clock"),
+		" | ",
+		util.Color("34", fmt.Sprintln("Projects -", time.Month(scoppedMonth), scoppedYear)),
+		"\n")
 
 	for i := 0; i < counter; i++ {
 		status := <-statues
-		name := status.Project.GetName()
-		padding := longest - len(name) + 2
-		fmt.Printf(
-			"| %s%s| %3d:%02d | ",
-			name,
-			repeatChar(" ", padding),
-			status.hours, status.mins,
-		)
+		p := status.Project
+		name := p.GetName()
+		hm := p.hoursMins()
+
+		fmt.Print(util.Color("36", fmt.Sprintf("%s ", hm)))
 		if status.OnClock {
-			fmt.Printf("%s |", status.timer)
+			fmt.Print(util.Color("35", fmt.Sprintf(" %s ", status.timer)))
 		} else {
-			fmt.Print("       |")
+			fmt.Print("        ")
 		}
-		fmt.Println()
+		fmt.Print(util.Color("34", fmt.Sprintf("  %s\n", name)))
 	}
+	fmt.Println("")
 
-	printRuler(longest)
-}
-
-func printStatusHeader(longest int) {
-	fmt.Println("\nReport for", time.Month(scoppedMonth), scoppedYear)
-
-	padding := repeatChar(" ", (longest-4)/2)
-	printRuler(longest)
-	fmt.Printf("|%sProject%s|  Hours |  Clock |\n", padding, padding)
-	printRuler(longest)
-}
-
-func printRuler(longest int) {
-	column := 1 + 6 + 1 + 2
-	ruler := repeatChar("-", longest+3+column+column)
-	fmt.Println(ruler)
 }
