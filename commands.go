@@ -164,10 +164,8 @@ func getContent() string {
 
 // Open external editor for text input from user
 func openEditor() (string, error) {
-	file, err := ioutil.TempFile(os.TempDir(), "subl")
-	args := strings.Split(os.Getenv("EDITOR"), " ")
-	args = append(args, file.Name())
-	cmd := exec.Command(args[0], args[1:]...)
+	file, err := ioutil.TempFile(os.TempDir(), "samay-buffer")
+	cmd := exec.Command("subl", "-w", file.Name())
 	if err = cmd.Start(); err != nil {
 		return "", err
 	}
