@@ -1,16 +1,18 @@
 package web
 
 import (
-	"code.google.com/p/goprotobuf/proto"
-	"code.google.com/p/gorilla/mux"
 	"encoding/json"
 	"fmt"
-	"github.com/nexneo/samay/data"
+	"go/build"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"os/exec"
+
+	"code.google.com/p/goprotobuf/proto"
+	"code.google.com/p/gorilla/mux"
+	"github.com/nexneo/samay/data"
 )
 
 var (
@@ -23,16 +25,17 @@ func init() {
 	router.HandleFunc("/projects", index)
 	router.HandleFunc("/entries/{id}", update)
 	router.Handle("/", router.NotFoundHandler)
-
-	proxyurl, _ := url.Parse("https://s3.amazonaws.com/nexneo/samay/")
-	proxy = httputil.NewSingleHostReverseProxy(proxyurl)
 }
 
 func StartServer(port string) error {
+	samayPkg, err := build.Import("github.com/nexneo/samay", "", build.FindOnly)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	http.Handle("/", router)
 	http.Handle("/a/",
 		http.StripPrefix(
-			"/a/", proxy,
+			"/a/", http.FileServer(http.Dir(samayPkg.Dir+"/public")),
 		),
 	)
 	url := "http://localhost" + port + "/a/index.html"
