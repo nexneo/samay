@@ -1,13 +1,14 @@
 package data
 
 import (
-	"code.google.com/p/goprotobuf/proto"
 	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"strings"
+
+	"code.google.com/p/goprotobuf/proto"
 )
 
 var (

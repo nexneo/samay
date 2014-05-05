@@ -1,14 +1,15 @@
 package data
 
 import (
-	"code.google.com/p/goprotobuf/proto"
 	"errors"
 	"fmt"
-	"github.com/nexneo/samay/util"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"code.google.com/p/goprotobuf/proto"
+	"github.com/nexneo/samay/util"
 )
 
 var (

@@ -2,8 +2,9 @@ package data_test
 
 import (
 	"fmt"
-	"github.com/nexneo/samay/data"
 	"testing"
+
+	"github.com/nexneo/samay/data"
 )
 
 func TestListProjects(t *testing.T) {

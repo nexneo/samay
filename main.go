@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/nexneo/samay/data"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/nexneo/samay/data"
 )
 
 var (

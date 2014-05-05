@@ -1,11 +1,12 @@
 package data_test
 
 import (
-	"code.google.com/p/goprotobuf/proto"
-	"github.com/nexneo/samay/data"
 	"os"
 	"testing"
 	"time"
+
+	"code.google.com/p/goprotobuf/proto"
+	"github.com/nexneo/samay/data"
 )
 
 func TestProjectCreation(t *testing.T) {
