@@ -75,6 +75,9 @@ factory("projects", function($http, $route) {
 
 	function DecoEntries(entries) {
 		var c = {"FUN": 1, "WORK": 2, "CHORE": 0}
+		if(entries === null){
+			return [];
+		}
 		for (var i = entries.length - 1; i >= 0; i--) {
 			entries[i]['type'] = c[entries[i]['type']];
 			entries[i]['hours'] = moment.duration(entries[i].duration / 1000000);
