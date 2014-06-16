@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/nexneo/samay/data"
-	"github.com/nexneo/samay/web"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/nexneo/samay/data"
+	"github.com/nexneo/samay/web"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 		"rm":    deleteEntryOrProject,
 		"show":  showEntryOrProject,
 
-		"mv":  moveProject,
+		"mv":  moveProjectOrEntry,
 		"log": logProject,
 
 		"report": report,
@@ -49,7 +50,7 @@ func addEntry(project *data.Project) (err error) {
 }
 
 func showEntryOrProject(project *data.Project) (err error) {
-	if idx < 0 {
+	if theIdx < 0 {
 		return showProject(project)
 	}
 	return showEntry(project)
@@ -66,10 +67,7 @@ func showProject(project *data.Project) (err error) {
 func showEntry(project *data.Project) (err error) {
 	var started, ended *time.Time
 	for i, entry := range project.Entries() {
-		if i > idx {
-			break
-		}
-		if i == idx {
+		if i == theIdx {
 			started, err = entry.StartedTime()
 			ended, err = entry.EndedTime()
 			fmt.Printf("       id : %s\n", entry.GetId())
@@ -86,7 +84,7 @@ func showEntry(project *data.Project) (err error) {
 }
 
 func deleteEntryOrProject(project *data.Project) (err error) {
-	if idx < 0 {
+	if theIdx < 0 {
 		return deleteProject(project)
 	}
 	return deleteEntry(project)
@@ -94,12 +92,8 @@ func deleteEntryOrProject(project *data.Project) (err error) {
 
 func deleteEntry(project *data.Project) (err error) {
 	for i, entry := range project.Entries() {
-		if i > idx {
-			break
-		}
-		if i == idx {
-			err = data.Destroy(entry)
-			break
+		if i == theIdx {
+			return data.Destroy(entry)
 		}
 	}
 	return
@@ -118,20 +112,38 @@ func deleteProject(project *data.Project) (err error) {
 	return
 }
 
-func moveProject(project *data.Project) (err error) {
+func moveProjectOrEntry(project *data.Project) (err error) {
 	newProject := data.CreateProject(newName)
 	if err = data.Save(newProject); err != nil {
 		return err
 	}
+
+	if theIdx < 0 {
+		return moveProject(project, newProject)
+	}
+
+	return moveEntry(project, newProject)
+}
+
+func moveProject(project, newProject *data.Project) error {
 	for _, entry := range project.Entries() {
 		entry.Project = newProject
-		err = data.Save(entry)
-		if err != nil {
+		if err := data.Save(entry); err != nil {
 			return err
 		}
 	}
+
 	fmt.Printf("All entries copied to project \"%s\" \n...\n", newProject.GetName())
-	deleteProject(project)
+	return deleteProject(project)
+}
+
+func moveEntry(project, newProject *data.Project) error {
+	for i, entry := range project.Entries() {
+		if i == theIdx {
+			entry.Project = newProject
+			return data.Save(entry)
+		}
+	}
 	return nil
 }
 

@@ -23,7 +23,7 @@ var (
 
 	duration time.Duration
 
-	idx,
+	theIdx,
 	month,
 	week int
 
@@ -64,6 +64,7 @@ func parseFlags() {
 	} else if cmd == "mv" {
 		name = os.Args[2]
 		newName = os.Args[3]
+		cmdflags.Parse(os.Args[4:])
 	} else {
 		cmdflags.Parse(os.Args[2:])
 		// if -p flag not set, check if second argument is Project name
@@ -87,7 +88,7 @@ func initflags(cmd string) {
 	cmdflags.StringVar(&httpPort, "port", ":8080", "HTTP Port")
 
 	cmdflags.IntVar(&month, "r", int(time.Now().Month()), "Report Month")
-	cmdflags.IntVar(&idx, "i", -1, "Entry index(#) in log")
+	cmdflags.IntVar(&theIdx, "i", -1, "Entry index(#) in log")
 
 	cmdflags.DurationVar(&duration, "d", time.Hour, "Entry Duration")
 
