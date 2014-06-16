@@ -40,7 +40,7 @@
                 </td>
                 <td class="content">
                     <a ng-href="#/projects/{{activeProject.sha}}/entries/{{entry.id}}">
-                        {{entry.content}}
+                        {{entry.content}}<p ng-hide="entry.content.length">Untitled</p>
                     </a>
                     &nbsp;
                     <span ng-repeat="tag in entry.tags | filter:notEmpty ">
