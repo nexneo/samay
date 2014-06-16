@@ -129,7 +129,7 @@ func PrintProjectLog(project *Project) {
 		}
 		fmt.Println("")
 	}
-	fmt.Println("---------")
+
 	printTotal(total)
 	fmt.Println()
 }

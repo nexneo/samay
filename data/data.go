@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -66,6 +67,15 @@ func (p *Project) GetShaFromName() string {
 	return util.SHA1("")
 }
 
+type byEndTime []*Entry
+
+func (f byEndTime) Len() int      { return len(f) }
+func (f byEndTime) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
+
+func (f byEndTime) Less(i, j int) bool {
+	return *f[i].Ended > *f[j].Ended
+}
+
 func (p *Project) Entries() (entries []*Entry) {
 	files, err := util.ReadDir(DB.ProjectDirPath(p) + "/entries")
 	if err != nil {
@@ -75,13 +85,18 @@ func (p *Project) Entries() (entries []*Entry) {
 	for _, file := range files {
 		entry := new(Entry)
 		entry.Project = p
+		if file.Name() == ".DS_Store" {
+			continue
+		}
 		entry.Id = proto.String(file.Name())
 		if err = Load(entry); err == nil {
+			entry.GetEnded()
 			entries = append(entries, entry)
 		} else {
-			fmt.Println(err)
+			fmt.Println("Failed:", file.Name(), ":", err)
 		}
 	}
+	sort.Sort(byEndTime(entries))
 	return
 }
 
