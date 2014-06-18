@@ -65,6 +65,7 @@ func parseFlags() {
 		name = os.Args[2]
 		newName = os.Args[3]
 		cmdflags.Parse(os.Args[4:])
+		projectNameCantbe(newName)
 	} else {
 		cmdflags.Parse(os.Args[2:])
 		// if -p flag not set, check if second argument is Project name
@@ -76,6 +77,16 @@ func parseFlags() {
 
 	if name == "" && cmd != "report" && cmd != "web" {
 		log.Print("Error: Project name required.\n\n")
+		usage()
+		os.Exit(0)
+	}
+
+	projectNameCantbe(name)
+}
+
+func projectNameCantbe(name string) {
+	if strings.HasPrefix(name, "-") {
+		log.Printf("Error: Project name can't be \"%s\"", name)
 		usage()
 		os.Exit(0)
 	}
@@ -97,7 +108,7 @@ func initflags(cmd string) {
 
 func usage() {
 	fmt.Fprintf(os.Stderr,
-		"Usage: samay [command] [project] [options|new project]\n\nCommands:\n%s%s%s%s%s%s%s%s%s\n\nOptions:\n",
+		"Usage: samay [command] [project] [new project] [options]\n\nCommands:\n%s%s%s%s%s%s%s%s%s\n\nOptions:\n",
 		"  start (s) : Start timer\n",
 		"  stop  (p) : Stop Timer and entry with -m=(description) or uses $EDITOR\n",
 		"  entry (e) : Direct entry with -d=(duration)\n",
