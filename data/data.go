@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/goprotobuf/proto"
 	"github.com/nexneo/samay/util"
+	"google.golang.org/protobuf/proto"
 )
 
 var (

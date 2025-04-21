@@ -1,7 +1,7 @@
 package data
 
 import (
-	"code.google.com/p/goprotobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	"io/ioutil"
 	"os"

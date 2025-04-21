@@ -8,7 +8,7 @@ import (
 	"os/user"
 	"strings"
 
-	"code.google.com/p/goprotobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 var (

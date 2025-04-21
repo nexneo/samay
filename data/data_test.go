@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/goprotobuf/proto"
 	"github.com/nexneo/samay/data"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestProjectCreation(t *testing.T) {
