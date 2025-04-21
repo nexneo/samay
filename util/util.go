@@ -48,7 +48,7 @@ func TimestampToTime(timestamp *int64) (*time.Time, error) {
 		t := time.Unix(*timestamp, 0)
 		return &t, nil
 	}
-	return &time.Time{}, errors.New("Not valid time")
+	return &time.Time{}, errors.New("not valid time")
 }
 
 type byModTime []os.FileInfo
