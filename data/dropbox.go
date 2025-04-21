@@ -3,7 +3,7 @@ package data
 import (
 	"encoding/base64"
 	"errors"
-	"io/ioutil"
+
 	"os"
 	"os/user"
 	"strings"
@@ -42,7 +42,7 @@ func (d *Dropbox) Init() error {
 
 	// read current user's dropbox host.db file
 	current_user, _ := user.Current()
-	dat, err := ioutil.ReadFile(
+	dat, err := os.ReadFile(
 		current_user.HomeDir + "/.dropbox/host.db",
 	)
 	if err != nil {
@@ -93,7 +93,7 @@ func (d *Dropbox) MkProjectDir(p *Project) (err error) {
 }
 
 func (d *Dropbox) Projects() (projects []*Project) {
-	folders, err := ioutil.ReadDir(d.BasePath)
+	folders, err := os.ReadDir(d.BasePath)
 	if err != nil {
 		return
 	}

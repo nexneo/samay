@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -71,9 +70,7 @@ func update(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	entry := &data.Entry{}
 
-	b, _ := ioutil.ReadAll(req.Body)
-
-	if err := json.Unmarshal(b, entry); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&entry); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

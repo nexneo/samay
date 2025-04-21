@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+
 	"os"
 	"os/exec"
 	"strings"
@@ -69,7 +69,13 @@ func showEntry(project *data.Project) (err error) {
 	for i, entry := range project.Entries() {
 		if i == theIdx {
 			started, err = entry.StartedTime()
+			if err != nil {
+				return err
+			}
 			ended, err = entry.EndedTime()
+			if err != nil {
+				return err
+			}
 			fmt.Printf("       id : %s\n", entry.GetId())
 			fmt.Printf(" contents : %s\n", entry.GetContent())
 			fmt.Printf(" duration : %s\n", strings.Trim(entry.HoursMins().String(), " "))
@@ -151,7 +157,7 @@ func report(project *data.Project) (err error) {
 	if month > 0 && month < 13 {
 		data.PrintProjectStatus(month)
 	} else {
-		err = fmt.Errorf("Month %d is not valid", month)
+		err = fmt.Errorf("month %d is not valid", month)
 	}
 	return
 }
@@ -176,12 +182,15 @@ func getContent() string {
 
 // Open external editor for text input from user
 func openEditor() (string, error) {
-	file, err := ioutil.TempFile(os.TempDir(), "samay-buffer")
+	file, err := os.CreateTemp(os.TempDir(), "samay-buffer")
+	if err != nil {
+		return "", err
+	}
 	cmd := exec.Command("subl", "-w", file.Name())
 	if err = cmd.Start(); err != nil {
 		return "", err
 	}
 	cmd.Wait()
-	data, err := ioutil.ReadFile(file.Name())
+	data, err := os.ReadFile(file.Name())
 	return string(data), err
 }

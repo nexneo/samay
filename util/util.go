@@ -62,7 +62,6 @@ func (f byModTime) Less(i, j int) bool {
 
 // ReadDir reads the directory named by dirname and returns
 // a list of sorted(by ModTime) directory entries.
-// http://localhost:6060/src/pkg/io/ioutil/ioutil.go?s=3159:3210#L87
 func ReadDir(dirname string) ([]os.FileInfo, error) {
 	f, err := os.Open(dirname)
 	if err != nil {

@@ -3,7 +3,6 @@ package data
 import (
 	"google.golang.org/protobuf/proto"
 
-	"io/ioutil"
 	"os"
 )
 
@@ -22,10 +21,7 @@ func Update(ps Persistable) error {
 }
 
 func Persisted(ps Persistable) bool {
-	if Load(ps) != nil {
-		return false
-	}
-	return true
+	return Load(ps) == nil
 }
 
 func write(ps Persistable) error {
@@ -40,7 +36,7 @@ func write(ps Persistable) error {
 		return err
 	}
 
-	return ioutil.WriteFile(ps.Location(), data, 0666)
+	return os.WriteFile(ps.Location(), data, 0666)
 }
 
 func Load(ps Persistable) error {
@@ -48,7 +44,7 @@ func Load(ps Persistable) error {
 }
 
 func LoadFromPath(path string, ps Persistable) error {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
