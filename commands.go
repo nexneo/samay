@@ -139,7 +139,7 @@ func moveProject(project, newProject *data.Project) error {
 		}
 	}
 
-	fmt.Printf("All entries copied to project \"%s\" \n...\n", newProject.GetName())
+	fmt.Printf("all entries copied to project \"%s\" \n...\n", newProject.GetName())
 	return deleteProject(project)
 }
 
@@ -186,7 +186,7 @@ func openEditor() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cmd := exec.Command("subl", "-w", file.Name())
+	cmd := exec.Command("code", "-w", file.Name())
 	if err = cmd.Start(); err != nil {
 		return "", err
 	}
