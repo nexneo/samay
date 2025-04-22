@@ -6,7 +6,6 @@ import (
 	"go/build"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"os/exec"
 
 	"github.com/gorilla/mux"
@@ -14,10 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var (
-	router *mux.Router
-	proxy  *httputil.ReverseProxy
-)
+var router *mux.Router
 
 func init() {
 	router = mux.NewRouter()
@@ -56,13 +52,10 @@ func index(w http.ResponseWriter, req *http.Request) {
 		projects = append(projects, &ProjectSet{project, project.Entries()})
 	}
 
-	b, err := json.Marshal(projects)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(projects); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Fprint(w, string(b))
 }
 
 func update(w http.ResponseWriter, req *http.Request) {

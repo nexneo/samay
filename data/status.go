@@ -80,14 +80,6 @@ func (hm hoursMins) String() string {
 	return fmt.Sprintf("%3d:%02d", hm.hours, hm.mins)
 }
 
-// simple function that return repeated Char in string.
-func repeatChar(c string, length int) (ret string) {
-	for i := 0; i < length; i++ {
-		ret += c
-	}
-	return
-}
-
 func PrintProjectLog(project *Project) {
 	printHeader := func(ty *time.Time) {
 		headerStr := "           "

@@ -14,7 +14,6 @@ import (
 var (
 	cmd,
 	name,
-	typ,
 	newName,
 	httpPort,
 	content string
@@ -24,10 +23,10 @@ var (
 	duration time.Duration
 
 	theIdx,
-	month,
-	week int
+	month int
 
 	cmdflags *flag.FlagSet
+	version  = "1.1.0"
 )
 
 func main() {
@@ -106,18 +105,25 @@ func initflags(cmd string) {
 	cmdflags.BoolVar(&billable, "bill", true, "Billable")
 }
 
+const usageTemplate = `Samay %s
+
+Usage: samay [command] [project] [new project] [options]
+
+Commands:
+  start, s    Start timer
+  stop,  p    Stop timer and entry with -m=(description) or uses $EDITOR
+  entry, e    Direct entry with -d=(duration)
+  rm          Remove all entries, or single with -i=(#)
+  mv          Move all entries to new project
+  log         Show log for project
+  show        Show project or entry with -i=(#)
+  report      Report for all projects
+  help        Show this help
+
+Options:
+`
+
 func usage() {
-	fmt.Fprintf(os.Stderr,
-		"Usage: samay [command] [project] [new project] [options]\n\nCommands:\n%s%s%s%s%s%s%s%s%s\n\nOptions:\n",
-		"  start (s) : Start timer\n",
-		"  stop  (p) : Stop Timer and entry with -m=(description) or uses $EDITOR\n",
-		"  entry (e) : Direct entry with -d=(duration)\n",
-		"  rm        : Remove all entries, or single with -i=(#)\n",
-		"  mv        : Move all entries to new project\n",
-		"  log       : Show log for project\n",
-		"  show      : Show project or entry with -i=(#)\n",
-		"  report    : Report for all projects\n",
-		"  help      : Help\n")
-	cmdflags.Parse([]string{})
+	fmt.Fprintf(os.Stderr, usageTemplate, version)
 	cmdflags.PrintDefaults()
 }

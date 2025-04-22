@@ -1,7 +1,6 @@
 package data
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -11,11 +10,6 @@ import (
 
 	"github.com/nexneo/samay/util"
 	"google.golang.org/protobuf/proto"
-)
-
-var (
-	_ = fmt.Errorf
-	_ = errors.New
 )
 
 // Types
@@ -161,7 +155,7 @@ func (t *Timer) StartedTime() (*time.Time, error) {
 
 func (t *Timer) Duration() time.Duration {
 	v, _ := t.StartedTime()
-	return time.Now().Sub(*v)
+	return time.Since(*v)
 }
 
 // Entry
@@ -170,7 +164,7 @@ func (project *Project) CreateEntry(content string, billable bool) *Entry {
 	content = strings.Trim(content, " \n\t\r")
 	tags := make([]string, 0, 20)
 
-	tagsFinder := regexp.MustCompile("\\B#(\\w\\w+)")
+	tagsFinder := regexp.MustCompile(`\B#(\w\w+)`)
 	for _, v := range tagsFinder.FindAllStringSubmatch(content, 20) {
 		if len(v) > 1 {
 			tags = append(tags, v[1])
