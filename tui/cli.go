@@ -31,12 +31,13 @@ func CreateApp() *app {
 		return item(name)
 	})
 	const defaultWidth = 20
-	const listHeight = 14
+	listHeight := len(items)*2 + 5
 
 	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
 	l.Title = "Please choose a project"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
+	l.Styles.TitleBar.Padding(3)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
@@ -88,7 +89,7 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ok {
 				a.project = data.CreateProject(string(i))
 			}
-			return a, tea.Quit
+			return a, nil
 
 		}
 	}
