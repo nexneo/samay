@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nexneo/samay/data"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nexneo/samay/tui"
 )
 
 var (
@@ -31,17 +32,25 @@ var (
 
 func main() {
 	parseFlags()
-	project := data.CreateProject(name)
-	// fmt.Println("Running...", cmd)
-	fn := commands[cmd]
-	if fn != nil {
-		err := fn(project)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	} else {
-		usage()
+
+	p := tea.NewProgram(tui.CreateApp())
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Alas, there's been an error: %v", err)
+		os.Exit(1)
 	}
+	fmt.Println("Bye!")
+	os.Exit(0)
+
+	// fmt.Println("Running...", cmd)
+	// fn := commands[cmd]
+	// if fn != nil {
+	// 	err := fn(project)
+	// 	if err != nil {
+	// 		log.Fatalln(err)
+	// 	}
+	// } else {
+	// 	usage()
+	// }
 }
 
 func parseFlags() {
