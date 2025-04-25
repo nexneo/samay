@@ -16,7 +16,7 @@ var (
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+	itemStyleFocused  = itemStyle.Foreground(lipgloss.Color("240"))
 )
 
 type app struct {
@@ -26,7 +26,9 @@ type app struct {
 }
 
 func CreateApp() *app {
-	items := lo.Map(data.DB.Projects(), func(p *data.Project, _ int) list.Item {
+	var project *data.Project
+	projects := data.DB.Projects()
+	items := lo.Map(projects, func(p *data.Project, _ int) list.Item {
 		name := *p.Name
 		return item(name)
 	})
@@ -42,8 +44,16 @@ func CreateApp() *app {
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 
+	for _, p := range projects {
+		timer, _ := p.OnClock()
+		if timer {
+			project = p
+			break
+		}
+	}
+
 	return &app{
-		project:  nil,
+		project:  project,
 		projects: l,
 		choices: [][2]string{
 			{"s", "Start timer"},
@@ -57,7 +67,6 @@ func CreateApp() *app {
 }
 
 func (a app) Init() tea.Cmd {
-
 	return nil
 }
 
@@ -73,6 +82,11 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Cool, what was the actual key pressed?
 		switch keypress := msg.String(); keypress {
+
+		// escape key
+		case "esc":
+			a.project = nil
+			return a, nil
 
 		// These keys should exit the program.
 		case "ctrl+c", "q":
@@ -105,10 +119,18 @@ func (a app) View() string {
 	}
 	// Display the choices in a simple list format
 	var output string
-	output += "Please choose an option: " + *a.project.Name + "\n\n"
+	onclock, _ := a.project.OnClock()
+	if onclock {
+		output += titleStyle.Render("Timer is running for project: " + *a.project.Name + "\n\n")
+	} else {
+		output += titleStyle.Render("Choose an option for project: " + *a.project.Name + "\n\n")
+	}
 	for _, choice := range a.choices {
+		if onclock && choice[0] == "s" {
+			continue
+		}
 		output += fmt.Sprintf("[%s] %s\n", choice[0], choice[1])
 	}
-	output += "\nPress q to quit.\n"
-	return quitTextStyle.Render(output)
+	output += helpStyle.Render("\nPress q to quit.\n")
+	return output
 }
