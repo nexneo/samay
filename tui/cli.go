@@ -2,24 +2,30 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 	"time" // Import the time package
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport" // Import viewport for scrolling logs
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/nexneo/samay/data"
+	"github.com/nexneo/samay/data" // Assuming util.Color exists and HmFromD
 	"github.com/samber/lo"
 )
 
 var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
+	titleStyle        = lipgloss.NewStyle().MarginLeft(2).Bold(true)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	inputPromptStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("240")) // Style for input prompt
 	errorStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).PaddingLeft(2) // Style for error messages
+	logHeaderStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("37")).Bold(true)      // Style for log date headers
+	logTotalStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("32")).Bold(true)      // Style for log totals
+	logEntryStyle     = lipgloss.NewStyle()                                                  // Style for individual log entries
+	logTitleStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)      // Style for the main log title
 )
 
 // Define different states for the application
@@ -30,6 +36,7 @@ const (
 	stateProjectMenu                // Showing the menu for a selected project
 	stateStoppingTimer              // Asking for a message before stopping timer
 	stateManualEntry                // Asking for time and message for manual entry
+	stateShowLogs                   // Displaying project logs
 )
 
 // Define focus states for manual entry
@@ -49,7 +56,9 @@ type app struct {
 	manualTimeInput  textinput.Model // Input for manual entry time
 	manualMsgInput   textinput.Model // Input for manual entry message
 	manualEntryFocus manualFocus     // Which input is focused in manual entry
+	logViewport      viewport.Model  // Viewport for scrolling logs
 	width            int             // store window width
+	height           int             // store window height
 	errorMessage     string          // To display temporary errors
 }
 
@@ -98,6 +107,10 @@ func CreateApp() *app {
 	manualMsgTI.CharLimit = 156
 	manualMsgTI.Width = 50
 
+	// Viewport for logs
+	vp := viewport.New(defaultWidth, 20) // Initial size, will be updated
+	vp.SetContent("Loading logs...")     // Placeholder content
+
 	initialState := stateProjectList
 	if currentProject != nil {
 		// show project menu if a timer is running, otherwise show project list
@@ -108,15 +121,16 @@ func CreateApp() *app {
 		project:          currentProject,
 		projects:         l,
 		state:            initialState,
-		stopMessageInput: stopTI, // Use the renamed field
+		stopMessageInput: stopTI,
 		manualTimeInput:  manualTimeTI,
 		manualMsgInput:   manualMsgTI,
-		manualEntryFocus: focusTime, // Start focus on time input
+		manualEntryFocus: focusTime,
+		logViewport:      vp,
 		choices: [][2]string{
 			{"s", "Start timer"},
 			{"p", "End timer"},
 			{"e", "Enter manually"},
-			{"", "Show logs"},      // Placeholder
+			{"l", "Show logs"},     // Added 'l' keybind
 			{"", "Edit project"},   // Placeholder
 			{"", "Delete project"}, // Placeholder
 		},
@@ -131,17 +145,29 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd // Slice to hold commands
 
-	// Clear error message on any key press or resize
-	a.errorMessage = ""
+	// Clear error message on any key press or resize, unless we are showing logs
+	// where the error might be relevant to the log fetching itself.
+	if a.state != stateShowLogs {
+		a.errorMessage = ""
+	}
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		a.width = msg.Width // Store width
+		a.width = msg.Width   // Store width
+		a.height = msg.Height // Store height
 		a.projects.SetWidth(msg.Width)
+		// Update viewport size, leave some space for title and help
+		headerHeight := lipgloss.Height(a.logTitleView())
+		footerHeight := lipgloss.Height(a.logHelpView())
+		a.logViewport.Width = msg.Width
+		a.logViewport.Height = msg.Height - headerHeight - footerHeight
 		// Adjust input widths dynamically if desired
 		// a.stopMessageInput.Width = msg.Width - 10
-		// a.manualTimeInput.Width = 20
 		// a.manualMsgInput.Width = msg.Width - 30
+		// Re-render logs if we are in that state, as width might affect wrapping
+		if a.state == stateShowLogs && a.project != nil {
+			a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width)) // Pass width
+		}
 		return a, nil
 
 	case tea.KeyMsg:
@@ -159,6 +185,9 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateManualEntry:
 			m, c := a.handleKeypressManualEntry(msg)
 			return m, c
+		case stateShowLogs:
+			m, c := a.handleKeypressShowLogs(msg)
+			return m, c
 		}
 	}
 
@@ -171,12 +200,15 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.stopMessageInput, cmd = a.stopMessageInput.Update(msg)
 		cmds = append(cmds, cmd)
 	case stateManualEntry:
-		// Update the currently focused input field
 		if a.manualEntryFocus == focusTime {
 			a.manualTimeInput, cmd = a.manualTimeInput.Update(msg)
 		} else {
 			a.manualMsgInput, cmd = a.manualMsgInput.Update(msg)
 		}
+		cmds = append(cmds, cmd)
+	case stateShowLogs:
+		// Update the viewport for scrolling
+		a.logViewport, cmd = a.logViewport.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 
@@ -190,11 +222,16 @@ func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a, tea.Quit
 	case "enter":
 		if i, ok := a.projects.SelectedItem().(item); ok {
-			selectedProj := data.CreateProject(string(i))
-			if selectedProj != nil {
-				a.project = selectedProj
-				a.state = stateProjectMenu // Switch to project menu
-				// Potentially load project details or check timer status here
+			// Find the project by name from the original list
+			foundProject := lo.Filter(data.DB.Projects(), func(p *data.Project, _ int) bool {
+				return *p.Name == string(i)
+			})
+			if len(foundProject) > 0 {
+				a.project = foundProject[0] // Get the actual project object
+				a.state = stateProjectMenu  // Switch to project menu
+			} else {
+				// This case should ideally not happen if the list is sourced correctly
+				a.errorMessage = fmt.Sprintf("Error: Could not find project '%s'", string(i))
 			}
 		}
 		return a, nil
@@ -228,26 +265,32 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				a.errorMessage = fmt.Sprintf("Error starting timer: %v", err)
 			}
-			// No state change needed, view will update based on onclock status
 		}
 		return a, nil
 	case "p": // End Timer (Prepare)
 		if onclock {
-			a.state = stateStoppingTimer    // Switch to stopping state
-			a.stopMessageInput.Focus()      // Focus the text input
-			a.stopMessageInput.SetValue("") // Clear previous message
-			return a, textinput.Blink       // Return the blink command
+			a.state = stateStoppingTimer
+			a.stopMessageInput.Focus()
+			a.stopMessageInput.SetValue("")
+			return a, textinput.Blink
 		}
-		return a, nil // Do nothing if timer is not running
+		return a, nil
 	case "e": // Enter Manually (Prepare)
-		a.state = stateManualEntry     // Switch to manual entry state
-		a.manualEntryFocus = focusTime // Start with time input focused
+		a.state = stateManualEntry
+		a.manualEntryFocus = focusTime
 		a.manualTimeInput.Focus()
 		a.manualMsgInput.Blur()
-		a.manualTimeInput.SetValue("") // Clear previous values
+		a.manualTimeInput.SetValue("")
 		a.manualMsgInput.SetValue("")
-		return a, textinput.Blink // Blink the time input cursor
-		// Add cases for other menu options (logs, edit, delete) here
+		return a, textinput.Blink
+	case "l": // Show Logs
+		a.state = stateShowLogs
+		// Format logs and set viewport content
+		a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width)) // Pass width
+		a.logViewport.GotoTop()                                                       // Scroll to top initially
+		a.errorMessage = ""                                                           // Clear previous errors
+		return a, nil
+		// Add cases for other menu options (edit, delete) here
 	}
 	return a, nil // No command for unhandled keys in this state
 }
@@ -258,32 +301,26 @@ func (a *app) handleKeypressStoppingTimer(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "ctrl+c":
 		return a, tea.Quit
 	case "enter":
-		// Stop the timer with the message from the input
 		message := a.stopMessageInput.Value()
 		if a.project != nil {
-			err := a.project.StopTimer(message, true) // StopTimer handles empty message ok
+			err := a.project.StopTimer(message, true)
 			if err != nil {
-				// If stopping fails, show error and return to menu
 				a.errorMessage = fmt.Sprintf("Error stopping timer: %v", err)
 				a.state = stateProjectMenu
 				a.stopMessageInput.Blur()
 				return a, nil
 			}
 		}
-		// Success: Go back to the project list and clear project
 		a.project = nil
 		a.state = stateProjectList
 		a.stopMessageInput.Blur()
-		// Potentially trigger a refresh of the project list if needed
 		return a, nil
 	case "esc":
-		// Cancel stopping, go back to project menu
 		a.state = stateProjectMenu
-		a.stopMessageInput.Blur() // Unfocus the input
+		a.stopMessageInput.Blur()
 		return a, nil
 	}
 
-	// Update the text input model
 	var cmd tea.Cmd
 	a.stopMessageInput, cmd = a.stopMessageInput.Update(msg)
 	return a, cmd
@@ -297,35 +334,31 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "ctrl+c":
 		return a, tea.Quit
 	case "esc":
-		// Cancel manual entry, go back to project menu
 		a.state = stateProjectMenu
 		a.manualTimeInput.Blur()
 		a.manualMsgInput.Blur()
 		return a, nil
-	case "enter", "tab", "shift+tab", "up", "down": // Handle focus switching and submission
+	case "enter", "tab", "shift+tab", "up", "down":
 		if keypress == "enter" && a.manualEntryFocus == focusMessage {
-			// --- Try to save the manual entry ---
 			durationStr := a.manualTimeInput.Value()
 			message := a.manualMsgInput.Value()
 
 			if durationStr == "" {
 				a.errorMessage = "Error: Duration cannot be empty."
-				a.manualEntryFocus = focusTime // Refocus time input
+				a.manualEntryFocus = focusTime
 				a.manualTimeInput.Focus()
 				a.manualMsgInput.Blur()
 				return a, textinput.Blink
 			}
 			if message == "" {
 				a.errorMessage = "Error: Message cannot be empty."
-				// Keep focus on message input
 				return a, textinput.Blink
 			}
 
-			// Parse the duration string (e.g., "1h30m", "45m")
 			duration, err := time.ParseDuration(durationStr)
 			if err != nil {
 				a.errorMessage = fmt.Sprintf("Error parsing duration: %v", err)
-				a.manualEntryFocus = focusTime // Refocus time input on error
+				a.manualEntryFocus = focusTime
 				a.manualTimeInput.Focus()
 				a.manualMsgInput.Blur()
 				return a, textinput.Blink
@@ -333,48 +366,43 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 			if a.project == nil {
 				a.errorMessage = "Error: No project selected (internal error)."
-				a.state = stateProjectList // Go back to list if project is lost
+				a.state = stateProjectList
 				return a, nil
 			}
 
-			// Create and save the entry (assuming billable is true for now)
-			billable := true // Or get this from project settings/another input
+			billable := true // Assume billable
 			entry := a.project.CreateEntryWithDuration(message, duration, billable)
-			err = data.Save(entry) // Use the Save function from data package
+			err = data.Save(entry)
 			if err != nil {
 				a.errorMessage = fmt.Sprintf("Error saving entry: %v", err)
-				// Stay in manual entry state to allow correction or cancellation
 				return a, nil
 			}
 
-			// Success: Go back to project menu
 			a.state = stateProjectMenu
 			a.manualTimeInput.Blur()
 			a.manualMsgInput.Blur()
-			// Optionally display a success message briefly?
 			return a, nil
 
 		} else {
-			// --- Switch focus between inputs ---
+			// Switch focus
 			if keypress == "tab" || keypress == "enter" || keypress == "down" {
-				a.manualEntryFocus = (a.manualEntryFocus + 1) % 2 // Cycle focus forward
+				a.manualEntryFocus = (a.manualEntryFocus + 1) % 2
 			} else if keypress == "shift+tab" || keypress == "up" {
-				a.manualEntryFocus = (a.manualEntryFocus + 2 - 1) % 2 // Cycle focus backward (modulo arithmetic)
+				a.manualEntryFocus = (a.manualEntryFocus + 2 - 1) % 2
 			}
 
 			if a.manualEntryFocus == focusTime {
 				a.manualTimeInput.Focus()
 				a.manualMsgInput.Blur()
-				cmd = textinput.Blink
 			} else {
 				a.manualTimeInput.Blur()
 				a.manualMsgInput.Focus()
-				cmd = textinput.Blink
 			}
-			return a, cmd
+			// Always blink cursor on focus change
+			return a, textinput.Blink
 		}
 
-	default: // Handle regular character input for the focused field
+	default: // Handle regular character input
 		if a.manualEntryFocus == focusTime {
 			a.manualTimeInput, cmd = a.manualTimeInput.Update(msg)
 		} else {
@@ -382,6 +410,155 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return a, cmd
 	}
+}
+
+// when showing logs
+func (a *app) handleKeypressShowLogs(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	switch keypress := msg.String(); keypress {
+	case "ctrl+c":
+		return a, tea.Quit
+	case "esc", "q": // Go back to project menu
+		a.state = stateProjectMenu
+		a.errorMessage = "" // Clear log-related errors
+		return a, nil
+	}
+
+	// Handle viewport scrolling (up/down arrows, pgup/pgdown, j/k)
+	a.logViewport, cmd = a.logViewport.Update(msg)
+	return a, cmd
+}
+
+// formatProjectLogs generates the log string for the viewport
+// It takes the available width to potentially handle wrapping (though basic for now)
+func (a *app) formatProjectLogs(project *data.Project, width int) string {
+	if project == nil {
+		return errorStyle.Render("Error: No project data available.")
+	}
+
+	entries := project.Entries() // Get entries (assuming sorted descending by time)
+	if len(entries) == 0 {
+		return itemStyle.Render("No log entries found for this project.")
+	}
+
+	var sb strings.Builder
+	var day int = -1 // Initialize day to -1 to ensure the first header prints
+	var total int64
+	now := time.Now()
+	maxEntries := 30 // Limit number of entries displayed
+
+	// --- Helper functions for formatting within the string builder ---
+	printHeader := func(ty *time.Time) {
+		headerStr := "           " // Indentation
+		if now.Year() == ty.Year() && now.YearDay() == ty.YearDay() {
+			headerStr = fmt.Sprintf("%s%s", headerStr, "Today")
+		} else {
+			// Format as MM/DD or YYYY/MM/DD if different year
+			if now.Year() == ty.Year() {
+				headerStr = fmt.Sprintf("%s%s", headerStr, ty.Format("01/02")) // MM/DD
+			} else {
+				headerStr = fmt.Sprintf("%s%s", headerStr, ty.Format("2006/01/02")) // YYYY/MM/DD
+			}
+		}
+		sb.WriteString(logHeaderStyle.Render(headerStr))
+		sb.WriteString("\n") // Newline after header
+	}
+
+	printTotal := func(totalDuration int64) {
+		if totalDuration != 0 {
+			// Use your existing HmFromD function if available and adapted
+			// Assuming HmFromD returns a struct with a String() method
+			// If HmFromD is not available, format manually:
+			totalDur := time.Duration(totalDuration)
+			totalStr := data.HmFromD(totalDur) // Use a helper if HmFromD not available
+			// Right-align the total within a reasonable width (e.g., 18 chars like original)
+			totalLine := fmt.Sprintf("%18s", totalStr)
+			sb.WriteString(logTotalStyle.Render(totalLine))
+			sb.WriteString("\n") // Newline after total
+		}
+	}
+	// --- End Helper Functions ---
+
+	// Main Title
+	sb.WriteString(logTitleStyle.Render(" #  Hours    Description"))
+	sb.WriteString("\n")
+	sb.WriteString(logTitleStyle.Render("------------------------------------")) // Separator
+	sb.WriteString("\n")
+
+	entryCount := 0
+	for i, entry := range entries {
+		if entryCount >= maxEntries {
+			sb.WriteString(itemStyle.Render(fmt.Sprintf("... (showing last %d entries)", maxEntries)))
+			sb.WriteString("\n")
+			break
+		}
+
+		ty, err := entry.EndedTime()
+		if err != nil {
+			// Handle error - maybe skip entry or show an error message?
+			sb.WriteString(errorStyle.Render(fmt.Sprintf("  Error getting time for entry %d: %v\n", i, err)))
+			continue // Skip this entry
+		}
+
+		// Check if the day has changed
+		currentDay := ty.YearDay() // Use YearDay for comparison across year boundaries
+		if day != currentDay {
+			printTotal(total) // Print total for the previous day
+			printHeader(ty)   // Print header for the new day
+			day = currentDay  // Update the current day
+			total = 0         // Reset total for the new day
+		}
+
+		// Add duration to total
+		if entry.Duration != nil {
+			total += *entry.Duration
+		}
+
+		// Format the entry line
+		// Adjust description length based on available width (simple truncation)
+		// Example: Max description width = total width - index width - hours width - padding
+		descMaxWidth := width - 4 - 8 - 4 // Rough estimate, adjust as needed
+		if descMaxWidth < 10 {
+			descMaxWidth = 10 // Minimum width
+		}
+		desc := entry.GetContent()
+		if len(desc) > descMaxWidth {
+			desc = desc[:descMaxWidth-3] + "..." // Truncate with ellipsis
+		}
+
+		// Use entry.HoursMins() if it exists and returns a string
+		// Otherwise format duration manually
+		hoursMinsStr := data.HmFromD(time.Duration(*entry.Duration)) // Use helper
+
+		// %2d: index (right-aligned, 2 spaces)
+		// %-8s: hours/mins (left-aligned, 8 spaces) - adjust width as needed
+		// %s: description
+		entryLine := fmt.Sprintf("%2d %-8s %s", entryCount+1, hoursMinsStr, desc)
+		sb.WriteString(logEntryStyle.Render(entryLine))
+		sb.WriteString("\n") // Newline after each entry
+		entryCount++
+	}
+
+	// Print the total for the last day
+	printTotal(total)
+	sb.WriteString("\n") // Extra newline at the end
+
+	return sb.String()
+}
+
+// Helper view for log title
+func (a app) logTitleView() string {
+	if a.project == nil {
+		return "" // No title if no project
+	}
+	title := fmt.Sprintf("Logs for Project: %s", *a.project.Name)
+	return titleStyle.Render(title)
+}
+
+// Helper view for log help
+func (a app) logHelpView() string {
+	return helpStyle.Render("↑/↓/j/k: scroll | q/esc: back | ctrl+c: quit")
 }
 
 func (a app) View() string {
@@ -393,7 +570,7 @@ func (a app) View() string {
 
 	case stateProjectMenu:
 		if a.project == nil {
-			viewContent = "Error: No project selected.\nPress Esc to return to list." // Should not happen
+			viewContent = errorStyle.Render("Error: No project selected.\nPress Esc to return to list.")
 		} else {
 			var lines []string
 			onclock, _ := a.project.OnClock()
@@ -408,11 +585,9 @@ func (a app) View() string {
 
 			// Render choices
 			for _, choice := range a.choices {
-				// Skip "Start timer" if already running
 				if onclock && choice[0] == "s" {
 					continue
 				}
-				// Skip "End timer" if not running
 				if !onclock && choice[0] == "p" {
 					continue
 				}
@@ -421,7 +596,7 @@ func (a app) View() string {
 				if choice[0] != "" {
 					choiceText = fmt.Sprintf("[%s] %s", choice[0], choice[1])
 				} else {
-					choiceText = fmt.Sprintf("    %s", choice[1]) // Indent options without keys
+					choiceText = fmt.Sprintf("    %s", choice[1])
 				}
 				lines = append(lines, itemStyle.Render(choiceText))
 			}
@@ -437,9 +612,9 @@ func (a app) View() string {
 		var lines []string
 		promptText := "Enter message for stopping timer (Project: " + *a.project.Name + ")"
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
-		lines = append(lines, "") // Blank line
+		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render(a.stopMessageInput.View()))
-		lines = append(lines, "") // Blank line
+		lines = append(lines, "")
 		helpText := helpStyle.Render("enter: submit | esc: cancel | ctrl+c: quit")
 		lines = append(lines, helpText)
 		viewContent = lipgloss.JoinVertical(lipgloss.Left, lines...)
@@ -448,33 +623,44 @@ func (a app) View() string {
 		var lines []string
 		promptText := "Manually enter time for project: " + *a.project.Name
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
-		lines = append(lines, "") // Blank line
-
-		// Render Time Input
+		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render("Duration (e.g., 1h30m):"))
 		lines = append(lines, itemStyle.Render(a.manualTimeInput.View()))
-		lines = append(lines, "") // Blank line
-
-		// Render Message Input
+		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render("Message:"))
 		lines = append(lines, itemStyle.Render(a.manualMsgInput.View()))
-		lines = append(lines, "") // Blank line
-
+		lines = append(lines, "")
 		helpText := helpStyle.Render("enter: next/submit | tab/↑/↓: switch | esc: cancel | ctrl+c: quit")
 		lines = append(lines, helpText)
 		viewContent = lipgloss.JoinVertical(lipgloss.Left, lines...)
 
+	case stateShowLogs:
+		// Combine title, viewport, and help view
+		titleView := a.logTitleView()
+		helpView := a.logHelpView()
+		// Use JoinVertical for proper layout respecting viewport height
+		viewContent = lipgloss.JoinVertical(lipgloss.Left,
+			titleView,
+			a.logViewport.View(), // Render the viewport content
+			helpView,
+		)
+
 	default:
-		viewContent = "Unknown state"
+		viewContent = errorStyle.Render("Unknown state")
 	}
 
-	// Append error message if any
+	// Append error message if any (and not empty)
+	// Ensure it doesn't overwrite the entire log view if there's a log error
 	if a.errorMessage != "" {
-		// Add a blank line before the error if content exists
-		if viewContent != "" {
-			viewContent += "\n\n"
+		errorMsgRendered := errorStyle.Render(a.errorMessage)
+		// If we are showing logs, append the error below the help text
+		if a.state == stateShowLogs {
+			viewContent = lipgloss.JoinVertical(lipgloss.Left, viewContent, errorMsgRendered)
+		} else {
+			// For other states, append with spacing
+			viewContent = lipgloss.JoinVertical(lipgloss.Left, viewContent, "", errorMsgRendered)
 		}
-		viewContent += errorStyle.Render(a.errorMessage)
+
 	}
 
 	return viewContent
