@@ -16,7 +16,6 @@ var (
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	itemStyleFocused  = itemStyle.Foreground(lipgloss.Color("240"))
 )
 
 type app struct {
@@ -115,20 +114,30 @@ func (a app) View() string {
 	if a.project == nil {
 		return a.projects.View()
 	}
-	// Display the choices in a simple list format
-	var output string
+
+	var lines []string
+
+	headerText := "Choose an option for project: " + *a.project.Name + "\n" // Added newline here
 	onclock, _ := a.project.OnClock()
 	if onclock {
-		output += titleStyle.Render("Timer is running for project: " + *a.project.Name + "\n\n")
-	} else {
-		output += titleStyle.Render("Choose an option for project: " + *a.project.Name + "\n\n")
+		headerText = "Timer is running for project: " + *a.project.Name + "\n" // Added newline here
 	}
+
+	lines = append(lines, titleStyle.MarginTop(1).Render(headerText))
+
+	// Render each choice as a separate line
 	for _, choice := range a.choices {
 		if onclock && choice[0] == "s" {
 			continue
 		}
-		output += fmt.Sprintf("[%s] %s\n", choice[0], choice[1])
+		choiceText := fmt.Sprintf("[%s] %s", choice[0], choice[1])
+		lines = append(lines, itemStyle.Render(choiceText))
 	}
-	output += helpStyle.Render("\nPress q to quit.\n")
-	return output
+
+	// Render the help text separately
+	helpText := "Press q to quit." // Leading newline for spacing
+	lines = append(lines, helpStyle.Render(helpText))
+
+	// Join all the rendered lines vertically
+	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
