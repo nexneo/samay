@@ -76,41 +76,39 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.projects.SetWidth(msg.Width)
 		return a, nil
-
-	// Is it a key press?
 	case tea.KeyMsg:
-
-		// Cool, what was the actual key pressed?
-		switch keypress := msg.String(); keypress {
-
-		// escape key
-		case "esc":
-			a.project = nil
-			return a, nil
-
-		// These keys should exit the program.
-		case "ctrl+c", "q":
-			return a, tea.Quit
-
-		case "s":
-			a.project.StartTimer()
-			return a, nil
-		case "p":
-			a.project.StopTimer("", true)
-			return a, nil
-		case "enter":
-			i, ok := a.projects.SelectedItem().(item)
-			if ok {
-				a.project = data.CreateProject(string(i))
-			}
-			return a, nil
-
+		m, c := a.handleKeypress(msg)
+		if m != nil {
+			return m, c
 		}
 	}
 
 	var cmd tea.Cmd
 	a.projects, cmd = a.projects.Update(msg)
 	return a, cmd
+}
+
+func (a app) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch keypress := msg.String(); keypress {
+	case "esc":
+		a.project = nil
+		return a, nil
+	case "ctrl+c", "q":
+		return a, tea.Quit
+	case "s":
+		a.project.StartTimer()
+		return a, nil
+	case "p":
+		a.project.StopTimer("", true)
+		return a, nil
+	case "enter":
+		if i, ok := a.projects.SelectedItem().(item); ok {
+			a.project = data.CreateProject(string(i))
+		}
+		return a, nil
+	default:
+		return nil, nil
+	}
 }
 
 func (a app) View() string {
