@@ -26,6 +26,7 @@ var (
 	logTotalStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("32")).Bold(true)      // Style for log totals
 	logEntryStyle     = lipgloss.NewStyle()                                                  // Style for individual log entries
 	logTitleStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)      // Style for the main log title
+	onClockStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("78"))                 // Cool green for "on clock" status
 )
 
 // Define different states for the application
@@ -444,11 +445,14 @@ func (a app) View() string {
 			var lines []string
 			onclock, _ := a.project.OnClock()
 			var headerText string
+			projectName := "project: " + *a.project.Name
 			if onclock {
-				headerText = "Timer is running for project: " + *a.project.Name
+				// Apply the green style only to the "(on clock)" part
+				headerText = projectName + onClockStyle.Render(" (on clock)")
 			} else {
-				headerText = "Choose an option for project: " + *a.project.Name
+				headerText = projectName
 			}
+			// Render the header with the base title style
 			lines = append(lines, titleStyle.MarginTop(1).Render(headerText))
 			lines = append(lines, "") // Spacing
 
@@ -465,6 +469,7 @@ func (a app) View() string {
 				if choice[0] != "" {
 					choiceText = fmt.Sprintf("[%s] %s", choice[0], choice[1])
 				} else {
+					// Add padding for alignment if no keybind exists
 					choiceText = fmt.Sprintf("    %s", choice[1])
 				}
 				lines = append(lines, itemStyle.Render(choiceText))

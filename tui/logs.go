@@ -40,9 +40,8 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 	now := time.Now()
 	maxEntries := 30 // Limit number of entries displayed
 
-	// --- Helper functions for formatting within the string builder ---
 	printHeader := func(ty *time.Time) {
-		headerStr := "           " // Indentation
+		headerStr := ""
 		if now.Year() == ty.Year() && now.YearDay() == ty.YearDay() {
 			headerStr = fmt.Sprintf("%s%s", headerStr, "Today")
 		} else {
@@ -53,6 +52,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 				headerStr = fmt.Sprintf("%s%s", headerStr, ty.Format("2006/01/02")) // YYYY/MM/DD
 			}
 		}
+		sb.WriteString("\n")
 		sb.WriteString(logHeaderStyle.Render(headerStr))
 		sb.WriteString("\n") // Newline after header
 	}
@@ -65,7 +65,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 			totalDur := time.Duration(totalDuration)
 			totalStr := data.HmFromD(totalDur) // Use a helper if HmFromD not available
 			// Right-align the total within a reasonable width (e.g., 18 chars like original)
-			totalLine := fmt.Sprintf("%18s", totalStr)
+			totalLine := fmt.Sprintf("%9s", totalStr)
 			sb.WriteString(logTotalStyle.Render(totalLine))
 			sb.WriteString("\n") // Newline after total
 		}
