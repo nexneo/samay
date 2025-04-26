@@ -418,9 +418,9 @@ func (a *app) handleKeypressShowLogs(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch keypress := msg.String(); keypress {
-	case "ctrl+c":
+	case "ctrl+c", "q":
 		return a, tea.Quit
-	case "esc", "q": // Go back to project menu
+	case "esc":
 		a.state = stateProjectMenu
 		a.errorMessage = "" // Clear log-related errors
 		return a, nil

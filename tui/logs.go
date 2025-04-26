@@ -19,7 +19,7 @@ func (a app) logTitleView() string {
 
 // Helper view for log help
 func (a app) logHelpView() string {
-	return helpStyle.Render("↑/↓/j/k: scroll | q/esc: back | ctrl+c: quit")
+	return helpStyle.Render("↑/↓/j/k: scroll | esc: back | q: quit")
 }
 
 // formatProjectLogs generates the log string for the viewport
