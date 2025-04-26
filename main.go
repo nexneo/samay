@@ -38,7 +38,6 @@ func main() {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
 	}
-	fmt.Println("Bye!")
 	os.Exit(0)
 
 	// fmt.Println("Running...", cmd)
