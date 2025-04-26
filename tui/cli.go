@@ -194,8 +194,13 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, textinput.Blink    // Return the blink command
 		}
 		return a, nil // Do nothing if timer is not running
-		// Add cases for other menu options (e, logs, edit, delete) here
-		// case "e": ...
+	// Add cases for other menu options (e, logs, edit, delete) here
+	case "e":
+		// Handle manual entry
+		// This could be a new state or a function call
+		// For now, just print a message
+		fmt.Println("Manual entry not implemented yet.")
+		return a, nil
 	}
 	return a, nil // No command for unhandled keys in this state
 }
@@ -257,7 +262,7 @@ func (a app) View() string {
 			if onclock && choice[0] == "s" {
 				continue
 			}
-			// Skip "End timer" if not running (optional, but good UX)
+			// Skip "End timer" if not running
 			if !onclock && choice[0] == "p" {
 				continue
 			}
