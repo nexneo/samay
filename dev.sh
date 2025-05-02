@@ -1,4 +1,4 @@
 #!/bin/bash
 
 go build
-./samay
+./samay report chores
