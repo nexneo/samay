@@ -18,6 +18,9 @@ var (
 	titleStyle           = lipgloss.NewStyle().MarginLeft(2).Bold(true)
 	itemStyle            = lipgloss.NewStyle().PaddingLeft(4)
 	projectActionStyle   = lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("250"))
+	projectShortcutStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("213")).Bold(true)
+	projectShortcutSlot  = lipgloss.NewStyle().Width(3)
+	projectLabelStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 	selectedItemStyle    = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle      = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle            = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1).Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"})
@@ -551,9 +554,12 @@ func (a app) projectActionsView(width int) string {
 		}
 		var choiceText string
 		if choice[0] != "" {
-			choiceText = fmt.Sprintf("[%s] %s", choice[0], choice[1])
+			shortcut := projectShortcutStyle.Render(fmt.Sprintf("[%s]", choice[0]))
+			label := projectLabelStyle.Render(choice[1])
+			choiceText = lipgloss.JoinHorizontal(lipgloss.Left, shortcut, " ", label)
 		} else {
-			choiceText = fmt.Sprintf("    %s", choice[1])
+			label := projectLabelStyle.Render(choice[1])
+			choiceText = lipgloss.JoinHorizontal(lipgloss.Left, projectShortcutSlot.Render(""), " ", label)
 		}
 		lines = append(lines, projectActionStyle.Render(choiceText))
 	}
@@ -574,7 +580,7 @@ func (a app) projectSelectionView() string {
 	}
 	div := verticalDivider(height)
 	top := lipgloss.JoinHorizontal(lipgloss.Top, leftContent, div, rightContent)
-	return lipgloss.JoinVertical(lipgloss.Left, top, "", a.projectFooterView())
+	return lipgloss.JoinVertical(lipgloss.Left, "", top, a.projectFooterView())
 }
 
 func (a *app) updateProjectSelectionFromList() {
