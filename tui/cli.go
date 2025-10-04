@@ -15,18 +15,23 @@ import (
 )
 
 var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2).Bold(true)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1).Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"})
-	inputPromptStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("240")) // Style for input prompt
-	errorStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).PaddingLeft(2) // Style for error messages
-	logHeaderStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("37")).Bold(true)      // Style for log date headers
-	logTotalStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("32")).Bold(true)      // Style for log totals
-	logEntryStyle     = lipgloss.NewStyle()                                                  // Style for individual log entries
-	logTitleStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)      // Style for the main log title
-	onClockStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("78"))                 // Cool green for "on clock" status
+	titleStyle           = lipgloss.NewStyle().MarginLeft(2).Bold(true)
+	itemStyle            = lipgloss.NewStyle().PaddingLeft(4)
+	selectedItemStyle    = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	paginationStyle      = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+	helpStyle            = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1).Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"})
+	inputPromptStyle     = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("109")) // Style for input prompt
+	errorStyle           = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).PaddingLeft(2) // Style for error messages
+	logHeaderStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("37")).Bold(true)      // Style for log date headers
+	logTotalStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("32")).Bold(true)      // Style for log totals
+	logEntryStyle        = lipgloss.NewStyle()                                                  // Style for individual log entries
+	logTitleStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)      // Style for the main log title
+	onClockStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("78"))                 // Cool green for "on clock" status
+	detailLabelStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("109")).Bold(true).PaddingLeft(2)
+	detailValueStyle     = lipgloss.NewStyle().PaddingLeft(1).Foreground(lipgloss.Color("252"))
+	detailSectionStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("111")).Bold(true).PaddingLeft(2)
+	detailRowStyle       = detailValueStyle.Copy().PaddingLeft(2)
+	detailHighlightStyle = detailRowStyle.Copy().Foreground(lipgloss.Color("213")).Bold(true)
 )
 
 // Define different states for the application
@@ -39,7 +44,6 @@ const (
 	stateManualEntry                  // Asking for time and message for manual entry
 	stateShowLogs                     // Displaying project logs
 	stateEntryList                    // Listing entries for a project
-	stateEntryDetail                  // Detailed view of a single entry
 	stateConfirm                      // Generic confirmation prompt
 	stateMoveEntryTarget              // Selecting target project for entry move
 	stateRenameProject                // Renaming/moving a project
@@ -55,13 +59,6 @@ const (
 	focusMessage
 )
 
-type entryAction int
-
-const (
-	entryActionView entryAction = iota
-	entryActionMove
-)
-
 type confirmAction int
 
 const (
@@ -71,34 +68,33 @@ const (
 )
 
 type app struct {
-	project            *data.Project
-	projects           list.Model
-	entries            list.Model
-	choices            [][2]string
-	state              state
-	stopMessageInput   textinput.Model // Renamed for clarity
-	manualTimeInput    textinput.Model // Input for manual entry time
-	manualMsgInput     textinput.Model // Input for manual entry message
-	manualEntryFocus   manualFocus     // Which input is focused in manual entry
-	logViewport        viewport.Model  // Viewport for scrolling logs
-	reportViewport     viewport.Model  // Viewport for report output
-	dashboardViewport  viewport.Model  // Viewport for dashboard output
-	width              int             // store window width
-	height             int             // store window height
-	errorMessage       string          // To display temporary errors
-	selectedEntry      *data.Entry
-	confirmMessage     string
-	confirmAction      confirmAction
-	confirmEntry       *data.Entry
-	confirmProject     *data.Project
-	moveTargetProject  *data.Project
-	moveProjects       list.Model
-	renameInput        textinput.Model
-	reportMonth        time.Month
-	reportYear         int
-	logShowAll         bool
-	entrySelectionMode entryAction
-	previousState      state
+	project           *data.Project
+	projects          list.Model
+	entries           list.Model
+	choices           [][2]string
+	state             state
+	stopMessageInput  textinput.Model // Renamed for clarity
+	manualTimeInput   textinput.Model // Input for manual entry time
+	manualMsgInput    textinput.Model // Input for manual entry message
+	manualEntryFocus  manualFocus     // Which input is focused in manual entry
+	logViewport       viewport.Model  // Viewport for scrolling logs
+	reportViewport    viewport.Model  // Viewport for report output
+	dashboardViewport viewport.Model  // Viewport for dashboard output
+	width             int             // store window width
+	height            int             // store window height
+	errorMessage      string          // To display temporary errors
+	selectedEntry     *data.Entry
+	confirmMessage    string
+	confirmAction     confirmAction
+	confirmEntry      *data.Entry
+	confirmProject    *data.Project
+	moveTargetProject *data.Project
+	moveProjects      list.Model
+	renameInput       textinput.Model
+	reportMonth       time.Month
+	reportYear        int
+	logShowAll        bool
+	previousState     state
 }
 
 func CreateApp() *app {
@@ -115,6 +111,7 @@ func CreateApp() *app {
 	l.Title = "Please choose a project"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
+	l.SetShowHelp(false)
 	l.Styles.TitleBar.Padding(3)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
@@ -182,18 +179,15 @@ func CreateApp() *app {
 			{"s", "Start timer"},
 			{"p", "End timer"},
 			{"e", "Enter manually"},
-			{"l", "Show logs"}, // Added 'l' keybind
-			{"v", "View entries"},
-			{"m", "Move entry"},
+			{"l", "Show logs"},
+			{"v", "Entries"},
 			{"d", "Delete project"},
 			{"r", "Rename project"},
-			{"o", "Project overview"},
 		},
-		renameInput:        renameTI,
-		reportMonth:        time.Now().Month(),
-		reportYear:         time.Now().Year(),
-		entrySelectionMode: entryActionView,
-		previousState:      initialState,
+		renameInput:   renameTI,
+		reportMonth:   time.Now().Month(),
+		reportYear:    time.Now().Year(),
+		previousState: initialState,
 	}
 }
 
@@ -262,9 +256,6 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateEntryList:
 			m, c := a.handleKeypressEntryList(msg)
 			return m, c
-		case stateEntryDetail:
-			m, c := a.handleKeypressEntryDetail(msg)
-			return m, c
 		case stateConfirm:
 			m, c := a.handleKeypressConfirm(msg)
 			return m, c
@@ -330,12 +321,10 @@ func (a *app) refreshEntryList() {
 	if width == 0 {
 		width = 80
 	}
-	height := a.height - 6
-	if height < 10 {
-		height = 10
-	}
-	listModel := buildEntryList(a.project, width, height)
+	const entryListHeight = 10
+	listModel := buildEntryList(a.project, width, entryListHeight)
 	a.entries = listModel
+	a.selectedEntry = entryFromListItem(a.entries.SelectedItem())
 }
 
 func (a *app) refreshProjectList() {
@@ -422,37 +411,63 @@ func truncateString(in string, max int) string {
 	return clean[:max-3] + "..."
 }
 
-func (a *app) entryDetailView() string {
-	if a.selectedEntry == nil {
-		return errorStyle.Render("No entry selected")
+func (a *app) entryDetailView(entry *data.Entry) string {
+	lines := []string{titleStyle.MarginTop(1).Render("Entry details")}
+	if entry == nil {
+		lines = append(lines, detailValueStyle.Render("Select an entry to see details"))
+		return lipgloss.JoinVertical(lipgloss.Left, lines...)
 	}
-	entry := a.selectedEntry
-	var lines []string
-	lines = append(lines, titleStyle.MarginTop(1).Render("Entry details"))
-	if a.project != nil {
-		lines = append(lines, itemStyle.Render(fmt.Sprintf("Project: %s", *a.project.Name)))
-	}
+
 	started, _ := entry.StartedTime()
 	ended, _ := entry.EndedTime()
 	duration := data.HmFromD(time.Duration(entry.GetDuration()))
-	lines = append(lines, "")
+
+	startedStr := "—"
 	if started != nil && !started.IsZero() {
-		lines = append(lines, itemStyle.Render(fmt.Sprintf("Started: %s", started.Format(time.RFC1123))))
+		startedStr = started.Format("Jan 02 2006 15:04")
 	}
+	endedStr := "—"
 	if ended != nil && !ended.IsZero() {
-		lines = append(lines, itemStyle.Render(fmt.Sprintf("Ended:   %s", ended.Format(time.RFC1123))))
+		endedStr = ended.Format("Jan 02 2006 15:04")
 	}
-	lines = append(lines, itemStyle.Render(fmt.Sprintf("Duration: %s", duration)))
-	lines = append(lines, itemStyle.Render(fmt.Sprintf("Billable: %t", entry.GetBillable())))
+	billableStr := "No"
+	if entry.GetBillable() {
+		billableStr = "Yes"
+	}
+	tags := "—"
 	if len(entry.GetTags()) > 0 {
-		lines = append(lines, itemStyle.Render("Tags: #"+strings.Join(entry.GetTags(), " #")))
+		tags = "#" + strings.Join(entry.GetTags(), " #")
 	}
+
+	lines = append(lines,
+		detailLine("Started:", startedStr),
+		detailLine("Ended:", endedStr),
+		detailLine("Duration:", duration.String()),
+		detailLine("Billable:", billableStr),
+		detailLine("Tags:", tags),
+	)
+
+	desc := strings.TrimSpace(entry.GetContent())
+	if desc == "" {
+		desc = "(no description)"
+	}
+
 	lines = append(lines, "")
-	lines = append(lines, logTitleStyle.Render("Description"))
-	lines = append(lines, itemStyle.Render(strings.TrimSpace(entry.GetContent())))
+	lines = append(lines, detailSectionStyle.Render("Description"))
+	for _, line := range strings.Split(desc, "\n") {
+		lines = append(lines, detailValueStyle.Copy().PaddingLeft(3).Render(line))
+	}
+
 	lines = append(lines, "")
-	lines = append(lines, helpStyle.Render("d: delete | m: move | esc: back | q: quit"))
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
+}
+
+func detailLine(label, value string) string {
+	if value == "" {
+		value = "—"
+	}
+	labelRendered := detailLabelStyle.Copy().Width(12).Render(label)
+	return lipgloss.JoinHorizontal(lipgloss.Left, labelRendered, detailValueStyle.Render(value))
 }
 
 // when the project list is active
@@ -537,23 +552,10 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.errorMessage = ""                                                           // Clear previous errors
 		return a, nil
 	case "v":
-		a.entrySelectionMode = entryActionView
 		a.refreshEntryList()
 		a.selectedEntry = nil
 		a.state = stateEntryList
 		a.errorMessage = ""
-		return a, nil
-	case "m":
-		a.entrySelectionMode = entryActionMove
-		a.refreshEntryList()
-		a.selectedEntry = nil
-		if len(a.entries.Items()) == 0 {
-			a.errorMessage = "No entries available to move."
-			a.entrySelectionMode = entryActionView
-			return a, nil
-		}
-		a.errorMessage = "Select an entry to move and press Enter."
-		a.state = stateEntryList
 		return a, nil
 	case "d":
 		a.confirmAction = confirmDeleteProject
@@ -572,9 +574,6 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.state = stateRenameProject
 		a.renameInput.Focus()
 		return a, textinput.Blink
-	case "o":
-		a.WebReplacementUI()
-		return a, nil
 	}
 	return a, nil // No command for unhandled keys in this state
 }
@@ -585,35 +584,26 @@ func (a *app) handleKeypressEntryList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a, tea.Quit
 	case "esc":
 		a.state = stateProjectMenu
-		a.entrySelectionMode = entryActionView
 		a.errorMessage = ""
 		return a, nil
-	case "enter":
+	case "m":
 		entry := entryFromListItem(a.entries.SelectedItem())
 		if entry == nil {
 			return a, nil
 		}
 		a.selectedEntry = entry
-		switch a.entrySelectionMode {
-		case entryActionMove:
-			a.prepareMoveProjectList()
-			if len(a.moveProjects.Items()) == 0 {
-				a.errorMessage = "No other projects available to move this entry."
-				a.state = stateProjectMenu
-				a.entrySelectionMode = entryActionView
-				return a, nil
-			}
-			a.previousState = stateEntryList
-			a.state = stateMoveEntryTarget
-			return a, nil
-		default:
-			a.entrySelectionMode = entryActionView
-			a.ShowEntryDetailUI()
+		a.prepareMoveProjectList()
+		if len(a.moveProjects.Items()) == 0 {
+			a.errorMessage = "No other projects available to move this entry."
 			return a, nil
 		}
+		a.previousState = stateEntryList
+		a.state = stateMoveEntryTarget
+		return a, nil
 	case "d":
 		entry := entryFromListItem(a.entries.SelectedItem())
 		if entry != nil {
+			a.selectedEntry = entry
 			a.confirmEntry = entry
 			a.confirmAction = confirmDeleteEntry
 			a.confirmMessage = fmt.Sprintf("Delete entry '%s'?", truncateString(entry.GetContent(), 40))
@@ -625,41 +615,8 @@ func (a *app) handleKeypressEntryList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	a.entries, cmd = a.entries.Update(msg)
+	a.selectedEntry = entryFromListItem(a.entries.SelectedItem())
 	return a, cmd
-}
-
-func (a *app) handleKeypressEntryDetail(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch keypress := msg.String(); keypress {
-	case "ctrl+c", "q":
-		return a, tea.Quit
-	case "esc":
-		a.state = stateEntryList
-		return a, nil
-	case "d":
-		if a.selectedEntry != nil {
-			a.confirmEntry = a.selectedEntry
-			a.confirmAction = confirmDeleteEntry
-			a.confirmMessage = fmt.Sprintf("Delete entry '%s'?", truncateString(a.selectedEntry.GetContent(), 40))
-			a.previousState = stateEntryDetail
-			a.state = stateConfirm
-		}
-		return a, nil
-	case "m":
-		if a.selectedEntry != nil {
-			a.entrySelectionMode = entryActionMove
-			a.prepareMoveProjectList()
-			if len(a.moveProjects.Items()) == 0 {
-				a.errorMessage = "No other projects available to move this entry."
-				a.state = stateEntryList
-				a.entrySelectionMode = entryActionView
-				return a, nil
-			}
-			a.previousState = stateEntryDetail
-			a.state = stateMoveEntryTarget
-		}
-		return a, nil
-	}
-	return a, nil
 }
 
 func (a *app) handleKeypressConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -916,7 +873,9 @@ func (a app) View() string {
 
 	switch a.state {
 	case stateProjectList:
-		viewContent = a.projects.View()
+		listView := a.projects.View()
+		help := helpStyle.Render("enter: open project | r: monthly report | o: weekly overview | q: quit")
+		viewContent = lipgloss.JoinVertical(lipgloss.Left, listView, "", help)
 
 	case stateProjectMenu:
 		if a.project == nil {
@@ -1003,20 +962,20 @@ func (a app) View() string {
 		if a.project == nil {
 			viewContent = errorStyle.Render("No project selected")
 		} else {
-			header := fmt.Sprintf("Entries for %s", *a.project.Name)
-			help := "enter: view | d: delete | m: move | esc: back | q: quit"
-			if a.entrySelectionMode == entryActionMove {
-				help = "enter: choose destination | esc: cancel | q: quit"
-			}
+			projectName := *a.project.Name
+			header := titleStyle.MarginTop(1).Render(fmt.Sprintf("Project: %s", projectName))
+			entriesTitle := titleStyle.Render("Entries")
+			help := helpStyle.Render("↑/↓: navigate | m: move entry | d: delete | esc: back | q: quit")
+			entry := entryFromListItem(a.entries.SelectedItem())
+			detail := a.entryDetailView(entry)
 			viewContent = lipgloss.JoinVertical(lipgloss.Left,
-				titleStyle.MarginTop(1).Render(header),
+				header,
+				entriesTitle,
 				a.entries.View(),
-				helpStyle.Render(help),
+				detail,
+				help,
 			)
 		}
-
-	case stateEntryDetail:
-		viewContent = a.entryDetailView()
 
 	case stateConfirm:
 		var lines []string
@@ -1056,7 +1015,7 @@ func (a app) View() string {
 		)
 
 	case stateDashboard:
-		title := titleStyle.MarginTop(1).Render("Project overview")
+		title := titleStyle.MarginTop(1).Render("Weekly overview")
 		controls := helpStyle.Render("r: refresh | esc: back | q: quit")
 		viewContent = lipgloss.JoinVertical(lipgloss.Left,
 			title,

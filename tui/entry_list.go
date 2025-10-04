@@ -78,11 +78,11 @@ func buildEntryList(project *data.Project, width, height int) list.Model {
 		items = append(items, entryItem{entry: e})
 	}
 
-	if height < 10 {
+	if height <= 0 {
 		height = 10
 	}
 	l := list.New(items, entryItemDelegate{}, width, height)
-	l.Title = fmt.Sprintf("%d entries", len(entries))
+	l.Title = ""
 	l.SetFilteringEnabled(true)
 	l.SetShowHelp(false)
 	l.SetShowPagination(true)

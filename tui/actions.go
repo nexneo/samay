@@ -43,7 +43,6 @@ func (a *app) RemoveEntryUI() {
 	}
 
 	a.selectedEntry = nil
-	a.entrySelectionMode = entryActionView
 	a.refreshEntryList()
 	if a.state == stateShowLogs {
 		a.ProjectLogUI()
@@ -122,7 +121,6 @@ func (a *app) MoveEntryUI() {
 	a.errorMessage = fmt.Sprintf("Entry moved to '%s'", a.moveTargetProject.GetName())
 	a.moveTargetProject = nil
 	a.selectedEntry = nil
-	a.entrySelectionMode = entryActionView
 	a.refreshEntryList()
 	if len(a.entries.Items()) == 0 {
 		a.state = stateProjectMenu
@@ -180,22 +178,6 @@ func (a *app) MoveProjectUI() {
 	a.refreshProjectList()
 	a.errorMessage = fmt.Sprintf("Project renamed to '%s'", newName)
 	a.state = stateProjectMenu
-}
-
-// ShowEntryDetailUI retains CLI entry inspection capability within the TUI.
-func (a *app) ShowEntryDetailUI() {
-	if a.selectedEntry == nil {
-		entry := entryFromListItem(a.entries.SelectedItem())
-		if entry == nil {
-			a.errorMessage = "Select an entry first."
-			return
-		}
-		a.selectedEntry = entry
-	}
-	if a.project != nil {
-		a.selectedEntry.Project = a.project
-	}
-	a.state = stateEntryDetail
 }
 
 // ReportViewUI retains CLI reporting capability within the TUI.
@@ -257,9 +239,11 @@ func (a *app) ReportViewUI() {
 	})
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Report period: %s – %s\n\n", start.Format("2006-01-02"), end.Add(-time.Second).Format("2006-01-02")))
-	sb.WriteString(fmt.Sprintf("%-28s %10s %10s %8s %s\n", "Project", "Total", "Billable", "Entries", "On clock"))
-	sb.WriteString(strings.Repeat("-", 68))
+	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("Report period: %s – %s", start.Format("2006-01-02"), end.Add(-time.Second).Format("2006-01-02"))))
+	sb.WriteString("\n\n")
+	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("%-28s %10s %10s %8s %s", "Project", "Total", "Billable", "Entries", "On clock")))
+	sb.WriteString("\n")
+	sb.WriteString(detailSectionStyle.Render(strings.Repeat("-", 68)))
 	sb.WriteString("\n")
 
 	for _, row := range rows {
@@ -269,12 +253,16 @@ func (a *app) ReportViewUI() {
 		if row.isOnClock {
 			onClock = fmt.Sprintf("running (%s)", data.HmFromD(row.clockAmount))
 		}
-		sb.WriteString(fmt.Sprintf("%-28s %10s %10s %8d %s\n", row.name, total, billable, row.entries, onClock))
+		line := fmt.Sprintf("%-28s %10s %10s %8d %s", row.name, total, billable, row.entries, onClock)
+		sb.WriteString(detailRowStyle.Render(line))
+		sb.WriteString("\n")
 	}
 
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("Overall tracked: %s\n", data.HmFromD(overall)))
-	sb.WriteString(fmt.Sprintf("Billable total: %s\n", data.HmFromD(overallBillable)))
+	sb.WriteString(detailLine("Overall tracked:", data.HmFromD(overall).String()))
+	sb.WriteString("\n")
+	sb.WriteString(detailLine("Billable total:", data.HmFromD(overallBillable).String()))
+	sb.WriteString("\n")
 
 	a.reportViewport.SetContent(sb.String())
 	a.previousState = a.state
@@ -352,9 +340,11 @@ func (a *app) WebReplacementUI() {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Weekly overview (since %s)\n\n", weekStart.Format("2006-01-02")))
-	sb.WriteString(fmt.Sprintf("%-20s %-8s %-8s %-8s %s\n", "Project", "7d", "Month", "Billable", "Activity"))
-	sb.WriteString(strings.Repeat("-", 20+1+8+1+8+1+8+1+barWidth))
+	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("Weekly overview (since %s)", weekStart.Format("2006-01-02"))))
+	sb.WriteString("\n\n")
+	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("%-20s %-8s %-8s %-8s %s", "Project", "7d", "Month", "Billable", "Activity")))
+	sb.WriteString("\n")
+	sb.WriteString(detailSectionStyle.Render(strings.Repeat("-", 20+1+8+1+8+1+8+1+barWidth)))
 	sb.WriteString("\n")
 
 	for _, row := range rows {
@@ -374,7 +364,7 @@ func (a *app) WebReplacementUI() {
 		if row.onClock {
 			activity = fmt.Sprintf("running %s", data.HmFromD(row.clock))
 		}
-		line := fmt.Sprintf("%-20s %-8s %-8s %-8s %s %s\n",
+		line := fmt.Sprintf("%-20s %-8s %-8s %-8s %s %s",
 			row.name,
 			data.HmFromD(row.week),
 			data.HmFromD(row.month),
@@ -383,10 +373,11 @@ func (a *app) WebReplacementUI() {
 			bar,
 		)
 		if a.project != nil && strings.EqualFold(row.name, a.project.GetName()) {
-			sb.WriteString(selectedItemStyle.Render(line))
+			sb.WriteString(detailHighlightStyle.Render(line))
 		} else {
-			sb.WriteString(itemStyle.Render(line))
+			sb.WriteString(detailRowStyle.Render(line))
 		}
+		sb.WriteString("\n")
 	}
 
 	a.dashboardViewport.SetContent(sb.String())
