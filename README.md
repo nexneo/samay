@@ -4,10 +4,15 @@ Samay
 Terminal-first time tracking and reporting.
 
 Samay is a Go application that lets you track work entirely from the terminal. It stores data locally inside your Dropbox folder, offers a Bubble Tea interface for daily use, and keeps the old command-line workflows around as future enhancements.
-<img width="911" height="769" alt="Screenshot 2025-10-04 at 2 27 14 PM" src="https://github.com/user-attachments/assets/f926e0ca-06b1-4da4-a8a9-2e27193dda3a" />
-<img width="911" height="769" alt="Screenshot 2025-10-04 at 2 27 41 PM" src="https://github.com/user-attachments/assets/e41ec38e-ab13-46f3-9a7c-ca892c46e150" />
-<img width="911" height="769" alt="Screenshot 2025-10-04 at 2 27 55 PM" src="https://github.com/user-attachments/assets/485857e9-b42f-43a9-a727-098cc8a473fa" />
-<img width="911" height="769" alt="Screenshot 2025-10-04 at 2 28 14 PM" src="https://github.com/user-attachments/assets/809ae5fe-f7a2-4834-9b50-25b949658374" />
+
+<p align="center">
+  <img alt="Project list view" src="https://github.com/user-attachments/assets/f926e0ca-06b1-4da4-a8a9-2e27193dda3a" width="45%" />
+  <img alt="Timer view" src="https://github.com/user-attachments/assets/e41ec38e-ab13-46f3-9a7c-ca892c46e150" width="45%" />
+</p>
+<p align="center">
+  <img alt="Weekly overview" src="https://github.com/user-attachments/assets/485857e9-b42f-43a9-a727-098cc8a473fa" width="45%" />
+  <img alt="Monthly report" src="https://github.com/user-attachments/assets/809ae5fe-f7a2-4834-9b50-25b949658374" width="45%" />
+</p>
 
 
 
