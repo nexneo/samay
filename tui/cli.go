@@ -978,9 +978,10 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 		} else {
 			// Switch focus
-			if keypress == "tab" || keypress == "enter" || keypress == "down" {
+			switch keypress {
+			case "tab", "enter", "down":
 				a.manualEntryFocus = (a.manualEntryFocus + 1) % 2
-			} else if keypress == "shift+tab" || keypress == "up" {
+			case "shift+tab", "up":
 				a.manualEntryFocus = (a.manualEntryFocus + 2 - 1) % 2
 			}
 
