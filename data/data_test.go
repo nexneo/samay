@@ -1,13 +1,61 @@
 package data_test
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/nexneo/samay/data"
 	"google.golang.org/protobuf/proto"
 )
+
+func TestMain(m *testing.M) {
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "getwd: %v\n", err)
+		os.Exit(1)
+	}
+
+	testDataPath := filepath.Join(wd, "..", "testing_data")
+	fmt.Println("Using test data path:", testDataPath)
+	if err := resetTestDataDir(testDataPath); err != nil {
+		fmt.Fprintf(os.Stderr, "prepare test data dir: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := data.SetBasePath(testDataPath); err != nil {
+		fmt.Fprintf(os.Stderr, "set base path: %v\n", err)
+		os.Exit(1)
+	}
+
+	code := m.Run()
+
+	if err := resetTestDataDir(testDataPath); err != nil {
+		fmt.Fprintf(os.Stderr, "cleanup test data dir: %v\n", err)
+		os.Exit(1)
+	}
+
+	os.Exit(code)
+}
+
+func resetTestDataDir(path string) error {
+	fmt.Println("Resetting test data directory:", path)
+	if err := os.RemoveAll(path); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(path, 0775); err != nil {
+		return err
+	}
+	gitkeep := filepath.Join(path, ".gitkeep")
+	if _, err := os.Stat(gitkeep); os.IsNotExist(err) {
+		if err := os.WriteFile(gitkeep, []byte{}, 0666); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func TestProjectCreation(t *testing.T) {
 	t.Parallel()

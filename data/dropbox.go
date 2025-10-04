@@ -6,6 +6,7 @@ import (
 
 	"os"
 	"os/user"
+	"path/filepath"
 	"strings"
 
 	"google.golang.org/protobuf/proto"
@@ -38,6 +39,10 @@ func (d *Dropbox) Init() error {
 		return nil
 	}
 
+	if envPath := os.Getenv("SAMAY_DATA_DIR"); envPath != "" {
+		return d.setBasePath(envPath)
+	}
+
 	stderr := errors.New("Dropbox folder can't be detected")
 
 	// read current user's dropbox host.db file
@@ -65,15 +70,33 @@ func (d *Dropbox) Init() error {
 	}
 
 	if len(dropboxPath) != 0 {
-		d.BasePath = string(dropboxPath) + "/Samay"
-		// Create samay data folder
-		// TODO make sure user doesn't have folder already
-		os.Mkdir(d.BasePath, 0775)
-	} else {
-		return stderr
+		return d.setBasePath(filepath.Join(string(dropboxPath), "Samay"))
 	}
 
-	return err
+	return stderr
+}
+
+func (d *Dropbox) setBasePath(path string) error {
+	if path == "" {
+		return errors.New("base path cannot be empty")
+	}
+
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(absolute, 0775); err != nil {
+		return err
+	}
+
+	d.BasePath = absolute
+	return nil
+}
+
+// SetBasePath overrides the Dropbox base path. Intended for tests.
+func SetBasePath(path string) error {
+	return DB.setBasePath(path)
 }
 
 func (d *Dropbox) ProjectDirPath(p *Project) string {
