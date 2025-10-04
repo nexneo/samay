@@ -897,18 +897,21 @@ func (a *app) handleKeypressStoppingTimer(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				a.errorMessage = fmt.Sprintf("Error stopping timer: %v", err)
 				a.state = stateProjectMenu
+				a.stopMessageInput.SetValue("")
 				a.stopMessageInput.Blur()
-				return a, nil
+				return a, tea.ClearScreen
 			}
 		}
 		a.state = stateProjectMenu
 		a.updateProjectSelectionFromList()
+		a.stopMessageInput.SetValue("")
 		a.stopMessageInput.Blur()
-		return a, nil
+		return a, tea.ClearScreen
 	case "esc":
 		a.state = stateProjectMenu
+		a.stopMessageInput.SetValue("")
 		a.stopMessageInput.Blur()
-		return a, nil
+		return a, tea.ClearScreen
 	}
 
 	var cmd tea.Cmd
