@@ -1,4 +1,3 @@
 #!/bin/bash
 
-go build
-./samay
+go build && ./samay 
