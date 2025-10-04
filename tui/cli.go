@@ -17,6 +17,7 @@ import (
 var (
 	titleStyle           = lipgloss.NewStyle().MarginLeft(2).Bold(true)
 	itemStyle            = lipgloss.NewStyle().PaddingLeft(4)
+	projectActionStyle   = lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("250"))
 	selectedItemStyle    = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle      = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle            = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1).Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"})
@@ -32,6 +33,8 @@ var (
 	detailSectionStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("111")).Bold(true).PaddingLeft(2)
 	detailRowStyle       = detailValueStyle.Copy().PaddingLeft(2)
 	detailHighlightStyle = detailRowStyle.Copy().Foreground(lipgloss.Color("213")).Bold(true)
+	columnStyle          = lipgloss.NewStyle().Padding(0, 1)
+	dividerStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 )
 
 // Define different states for the application
@@ -100,6 +103,9 @@ type app struct {
 func CreateApp() *app {
 	var currentProject *data.Project
 	projects := data.DB.Projects()
+	if len(projects) > 0 {
+		currentProject = projects[0]
+	}
 	items := lo.Map(projects, func(p *data.Project, _ int) list.Item {
 		name := *p.Name
 		return item(name)
@@ -160,11 +166,10 @@ func CreateApp() *app {
 
 	initialState := stateProjectList
 	if currentProject != nil {
-		// show project menu if a timer is running, otherwise show project list
 		initialState = stateProjectMenu
 	}
 
-	return &app{
+	a := &app{
 		project:           currentProject,
 		projects:          l,
 		state:             initialState,
@@ -181,14 +186,27 @@ func CreateApp() *app {
 			{"e", "Enter manually"},
 			{"l", "Show logs"},
 			{"v", "Entries"},
-			{"d", "Delete project"},
-			{"r", "Rename project"},
+			{"D", "Delete project"},
+			{"R", "Rename project"},
 		},
 		renameInput:   renameTI,
 		reportMonth:   time.Now().Month(),
 		reportYear:    time.Now().Year(),
 		previousState: initialState,
 	}
+
+	if currentProject != nil {
+		for idx, p := range projects {
+			if p.GetName() == currentProject.GetName() {
+				a.projects.Select(idx)
+				break
+			}
+		}
+	}
+
+	a.updateProjectSelectionFromList()
+
+	return a
 }
 
 func (a app) Init() tea.Cmd {
@@ -209,7 +227,12 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.width = msg.Width   // Store width
 		a.height = msg.Height // Store height
-		a.projects.SetWidth(msg.Width)
+		listWidth, _ := a.projectColumnWidths(msg.Width)
+		listHeight := msg.Height - 4
+		if listHeight < 5 {
+			listHeight = 5
+		}
+		a.projects.SetSize(listWidth, listHeight)
 		// Update viewport size, leave some space for title and help
 		headerHeight := lipgloss.Height(a.logTitleView())
 		footerHeight := lipgloss.Height(a.logHelpView())
@@ -343,6 +366,7 @@ func (a *app) refreshProjectList() {
 		width = 40
 	}
 	a.projects.SetSize(width, height)
+	a.updateProjectSelectionFromList()
 }
 
 func (a *app) exitConfirmation() {
@@ -470,26 +494,147 @@ func detailLine(label, value string) string {
 	return lipgloss.JoinHorizontal(lipgloss.Left, labelRendered, detailValueStyle.Render(value))
 }
 
+func verticalDivider(height int) string {
+	if height < 1 {
+		height = 1
+	}
+	segments := make([]string, height)
+	for i := range segments {
+		segments[i] = "│"
+	}
+	return dividerStyle.Render(strings.Join(segments, "\n"))
+}
+
+func (a app) projectColumnWidths(totalWidth int) (int, int) {
+	if totalWidth <= 0 {
+		totalWidth = 80
+	}
+	dividerWidth := lipgloss.Width("│")
+	available := totalWidth - dividerWidth
+	if available < 2 {
+		return 1, 1
+	}
+	left := available / 2
+	right := available - left
+	return left, right
+}
+
+func (a app) projectFooterView() string {
+	baseControls := []string{"↑/↓: navigate", "r: monthly report (list)", "o: weekly overview", "q: quit"}
+	return helpStyle.Render(strings.Join(baseControls, " | "))
+}
+
+func (a app) projectActionsView(width int) string {
+	if width <= 0 {
+		width = 40
+	}
+	if a.project == nil {
+		lines := []string{titleStyle.Render("Project actions"), "", projectActionStyle.Render("Select a project to see available actions.")}
+		return lipgloss.NewStyle().Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+	}
+
+	onclock, _ := a.project.OnClock()
+	projectName := "project: " + *a.project.Name
+	if onclock {
+		projectName += onClockStyle.Render(" (on clock)")
+	}
+	lines := []string{
+		titleStyle.Render(projectName),
+		"",
+	}
+	for _, choice := range a.choices {
+		if onclock && choice[0] == "s" {
+			continue
+		}
+		if !onclock && choice[0] == "p" {
+			continue
+		}
+		var choiceText string
+		if choice[0] != "" {
+			choiceText = fmt.Sprintf("[%s] %s", choice[0], choice[1])
+		} else {
+			choiceText = fmt.Sprintf("    %s", choice[1])
+		}
+		lines = append(lines, projectActionStyle.Render(choiceText))
+	}
+	return lipgloss.NewStyle().Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (a app) projectSelectionView() string {
+	totalWidth := a.width
+	if totalWidth <= 0 {
+		totalWidth = 80
+	}
+	_, rightWidth := a.projectColumnWidths(totalWidth)
+	leftContent := columnStyle.Render(a.projects.View())
+	rightContent := columnStyle.Render(a.projectActionsView(rightWidth))
+	height := lipgloss.Height(leftContent)
+	if h := lipgloss.Height(rightContent); h > height {
+		height = h
+	}
+	div := verticalDivider(height)
+	top := lipgloss.JoinHorizontal(lipgloss.Top, leftContent, div, rightContent)
+	return lipgloss.JoinVertical(lipgloss.Left, top, "", a.projectFooterView())
+}
+
+func (a *app) updateProjectSelectionFromList() {
+	items := a.projects.Items()
+	if len(items) == 0 {
+		a.project = nil
+		a.state = stateProjectList
+		return
+	}
+
+	selected := a.projects.SelectedItem()
+	selectedItem, ok := selected.(item)
+	if !ok {
+		a.projects.Select(0)
+		selected = a.projects.SelectedItem()
+		selectedItem, ok = selected.(item)
+		if !ok {
+			a.project = nil
+			a.state = stateProjectList
+			return
+		}
+	}
+
+	name := string(selectedItem)
+	if project, found := lo.Find(data.DB.Projects(), func(p *data.Project) bool {
+		return *p.Name == name
+	}); found {
+		a.project = project
+		if a.state == stateProjectList {
+			a.state = stateProjectMenu
+		}
+		return
+	}
+
+	firstItem, ok := items[0].(item)
+	if !ok {
+		a.project = nil
+		a.state = stateProjectList
+		return
+	}
+	if project, found := lo.Find(data.DB.Projects(), func(p *data.Project) bool {
+		return *p.Name == string(firstItem)
+	}); found {
+		a.projects.Select(0)
+		a.project = project
+		if a.state == stateProjectList {
+			a.state = stateProjectMenu
+		}
+		return
+	}
+
+	a.project = nil
+	a.state = stateProjectList
+}
+
 // when the project list is active
 func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
-	case "enter":
-		if i, ok := a.projects.SelectedItem().(item); ok {
-			// Find the project by name from the original list
-			foundProject := lo.Filter(data.DB.Projects(), func(p *data.Project, _ int) bool {
-				return *p.Name == string(i)
-			})
-			if len(foundProject) > 0 {
-				a.project = foundProject[0] // Get the actual project object
-				a.state = stateProjectMenu  // Switch to project menu
-			} else {
-				// This case should ideally not happen if the list is sourced correctly
-				a.errorMessage = fmt.Sprintf("Error: Could not find project '%s'", string(i))
-			}
-		}
-		return a, nil
 	case "r":
 		a.ReportViewUI()
 		return a, nil
@@ -501,6 +646,7 @@ func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Default list navigation
 	var cmd tea.Cmd
 	a.projects, cmd = a.projects.Update(msg)
+	a.updateProjectSelectionFromList()
 	return a, cmd
 }
 
@@ -519,6 +665,12 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "esc": // Go back to project list
 		a.project = nil
 		a.state = stateProjectList
+		return a, nil
+	case "r":
+		a.ReportViewUI()
+		return a, nil
+	case "o":
+		a.WebReplacementUI()
 		return a, nil
 	case "s": // Start Timer
 		if !onclock {
@@ -557,7 +709,7 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.state = stateEntryList
 		a.errorMessage = ""
 		return a, nil
-	case "d":
+	case "D", "shift+d":
 		a.confirmAction = confirmDeleteProject
 		a.confirmProject = a.project
 		a.confirmEntry = nil
@@ -567,7 +719,7 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.previousState = stateProjectMenu
 		a.state = stateConfirm
 		return a, nil
-	case "r":
+	case "R", "shift+r":
 		if a.project != nil {
 			a.renameInput.SetValue(*a.project.Name)
 		}
@@ -575,7 +727,11 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.renameInput.Focus()
 		return a, textinput.Blink
 	}
-	return a, nil // No command for unhandled keys in this state
+
+	var cmd tea.Cmd
+	a.projects, cmd = a.projects.Update(msg)
+	a.updateProjectSelectionFromList()
+	return a, cmd
 }
 
 func (a *app) handleKeypressEntryList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -745,8 +901,8 @@ func (a *app) handleKeypressStoppingTimer(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				return a, nil
 			}
 		}
-		a.project = nil
-		a.state = stateProjectList
+		a.state = stateProjectMenu
+		a.updateProjectSelectionFromList()
 		a.stopMessageInput.Blur()
 		return a, nil
 	case "esc":
@@ -872,54 +1028,8 @@ func (a app) View() string {
 	var viewContent string
 
 	switch a.state {
-	case stateProjectList:
-		listView := a.projects.View()
-		help := helpStyle.Render("enter: open project | r: monthly report | o: weekly overview | q: quit")
-		viewContent = lipgloss.JoinVertical(lipgloss.Left, listView, "", help)
-
-	case stateProjectMenu:
-		if a.project == nil {
-			viewContent = errorStyle.Render("Error: No project selected.\nPress Esc to return to list.")
-		} else {
-			var lines []string
-			onclock, _ := a.project.OnClock()
-			var headerText string
-			projectName := "project: " + *a.project.Name
-			if onclock {
-				// Apply the green style only to the "(on clock)" part
-				headerText = projectName + onClockStyle.Render(" (on clock)")
-			} else {
-				headerText = projectName
-			}
-			// Render the header with the base title style
-			lines = append(lines, titleStyle.MarginTop(1).Render(headerText))
-			lines = append(lines, "") // Spacing
-
-			// Render choices
-			for _, choice := range a.choices {
-				if onclock && choice[0] == "s" {
-					continue
-				}
-				if !onclock && choice[0] == "p" {
-					continue
-				}
-
-				var choiceText string
-				if choice[0] != "" {
-					choiceText = fmt.Sprintf("[%s] %s", choice[0], choice[1])
-				} else {
-					// Add padding for alignment if no keybind exists
-					choiceText = fmt.Sprintf("    %s", choice[1])
-				}
-				lines = append(lines, itemStyle.Render(choiceText))
-			}
-
-			lines = append(lines, "") // Spacing before help
-			helpText := helpStyle.Render("esc: back | q: quit")
-			lines = append(lines, helpText)
-
-			viewContent = lipgloss.JoinVertical(lipgloss.Left, lines...)
-		}
+	case stateProjectList, stateProjectMenu:
+		viewContent = a.projectSelectionView()
 
 	case stateStoppingTimer:
 		var lines []string
