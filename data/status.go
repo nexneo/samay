@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nexneo/samay/util"
@@ -77,7 +78,7 @@ func HmFromD(d time.Duration) hoursMins {
 
 // consistent string presentation of hoursMins
 func (hm hoursMins) String() string {
-	return fmt.Sprintf("%3d:%02d", hm.hours, hm.mins)
+	return strings.Trim(fmt.Sprintf("%3d:%02d", hm.hours, hm.mins), " ")
 }
 
 func PrintProjectLog(project *Project) {

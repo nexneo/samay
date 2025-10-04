@@ -18,7 +18,7 @@ var (
 	titleStyle           = lipgloss.NewStyle().MarginLeft(2).Bold(true)
 	itemStyle            = lipgloss.NewStyle().PaddingLeft(4)
 	projectActionStyle   = lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("250"))
-	projectShortcutStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("213")).Bold(true)
+	projectShortcutStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("170"))
 	projectShortcutSlot  = lipgloss.NewStyle().Width(3)
 	projectLabelStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 	selectedItemStyle    = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
@@ -34,8 +34,8 @@ var (
 	detailLabelStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("109")).Bold(true).PaddingLeft(2)
 	detailValueStyle     = lipgloss.NewStyle().PaddingLeft(1).Foreground(lipgloss.Color("252"))
 	detailSectionStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("111")).Bold(true).PaddingLeft(2)
-	detailRowStyle       = detailValueStyle.Copy().PaddingLeft(2)
-	detailHighlightStyle = detailRowStyle.Copy().Foreground(lipgloss.Color("213")).Bold(true)
+	detailRowStyle       = detailValueStyle.PaddingLeft(2)
+	detailHighlightStyle = detailRowStyle.Foreground(lipgloss.Color("213")).Bold(true)
 	columnStyle          = lipgloss.NewStyle().Padding(0, 1)
 	dividerStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 )
@@ -481,8 +481,8 @@ func (a *app) entryDetailView(entry *data.Entry) string {
 
 	lines = append(lines, "")
 	lines = append(lines, detailSectionStyle.Render("Description"))
-	for _, line := range strings.Split(desc, "\n") {
-		lines = append(lines, detailValueStyle.Copy().PaddingLeft(3).Render(line))
+	for line := range strings.SplitSeq(desc, "\n") {
+		lines = append(lines, detailValueStyle.PaddingLeft(2).Render(line))
 	}
 
 	lines = append(lines, "")
@@ -554,9 +554,9 @@ func (a app) projectActionsView(width int) string {
 		}
 		var choiceText string
 		if choice[0] != "" {
-			shortcut := projectShortcutStyle.Render(fmt.Sprintf("[%s]", choice[0]))
+			shortcut := projectShortcutStyle.Render(fmt.Sprintf("%s: ", choice[0]))
 			label := projectLabelStyle.Render(choice[1])
-			choiceText = lipgloss.JoinHorizontal(lipgloss.Left, shortcut, " ", label)
+			choiceText = lipgloss.JoinHorizontal(lipgloss.Left, shortcut, label)
 		} else {
 			label := projectLabelStyle.Render(choice[1])
 			choiceText = lipgloss.JoinHorizontal(lipgloss.Left, projectShortcutSlot.Render(""), " ", label)

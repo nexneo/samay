@@ -37,12 +37,6 @@ func (d entryItemDelegate) Render(w io.Writer, m list.Model, index int, listItem
 	entry := it.entry
 	hm := data.HmFromD(time.Duration(entry.GetDuration()))
 
-	ended, _ := entry.EndedTime()
-	endedStr := "--"
-	if ended != nil && !ended.IsZero() {
-		endedStr = ended.Format("2006-01-02 15:04")
-	}
-
 	desc := strings.TrimSpace(strings.ReplaceAll(entry.GetContent(), "\n", " "))
 	if len(desc) == 0 {
 		desc = "(no description)"
@@ -60,10 +54,10 @@ func (d entryItemDelegate) Render(w io.Writer, m list.Model, index int, listItem
 		desc = desc[:maxDesc-3] + "..."
 	}
 
-	line := fmt.Sprintf("%2d %s %s %s", index+1, hm, endedStr, desc)
+	line := fmt.Sprintf("%2d %s %s", index+1, hm, desc)
 
 	if index == m.Index() {
-		highlight := selectedItemStyle.Copy().PaddingLeft(4)
+		highlight := selectedItemStyle.PaddingLeft(4)
 		fmt.Fprint(w, highlight.Render(line))
 		return
 	}
