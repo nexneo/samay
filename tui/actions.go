@@ -239,7 +239,7 @@ func (a *app) ReportViewUI() {
 	})
 
 	var sb strings.Builder
-	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("Report period: %s – %s", start.Format("2006-01-02"), end.Add(-time.Second).Format("2006-01-02"))))
+	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("%s – %s", start.Format("2006-01-02"), end.Add(-time.Second).Format("2006-01-02"))))
 	sb.WriteString("\n\n")
 	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("%-28s %10s %10s %8s %s", "Project", "Total", "Billable", "Entries", "On clock")))
 	sb.WriteString("\n")
@@ -259,9 +259,9 @@ func (a *app) ReportViewUI() {
 	}
 
 	sb.WriteString("\n")
-	sb.WriteString(detailLine("Overall tracked:", data.HmFromD(overall).String()))
+	sb.WriteString(detailLine("Tracked:", data.HmFromD(overall).String()))
 	sb.WriteString("\n")
-	sb.WriteString(detailLine("Billable total:", data.HmFromD(overallBillable).String()))
+	sb.WriteString(detailLine("Billable:", data.HmFromD(overallBillable).String()))
 	sb.WriteString("\n")
 
 	a.reportViewport.SetContent(sb.String())
@@ -340,7 +340,7 @@ func (a *app) WebReplacementUI() {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("Weekly overview (since %s)", weekStart.Format("2006-01-02"))))
+	sb.WriteString(projectLabelStyle.PaddingLeft(2).Render(fmt.Sprintf("Weekly overview (since %s)", weekStart.Format("2006-01-02"))))
 	sb.WriteString("\n\n")
 	sb.WriteString(detailSectionStyle.Render(fmt.Sprintf("%-20s %-8s %-8s %-8s %s", "Project", "7d", "Month", "Billable", "Activity")))
 	sb.WriteString("\n")

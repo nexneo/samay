@@ -1135,7 +1135,7 @@ func (a app) View() string {
 		)
 
 	case stateDashboard:
-		title := titleStyle.MarginTop(1).Render("Weekly overview")
+		title := titleStyle.MarginTop(1).Render("")
 		controls := helpStyle.Render("r: refresh | esc: back | q: quit")
 		viewContent = lipgloss.JoinVertical(lipgloss.Left,
 			title,
