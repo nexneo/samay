@@ -1,138 +1,81 @@
 Samay
 =====
 
-Command-line Time tracking and reporting
-----------------------------------------
+Terminal-first time tracking and reporting.
 
-Samay is a command-line time tracking tool for developers. It's designed for those who are comfortable working in the terminal. The name "Samay" is the Hindi word for "Time."
-
-The tool allows you to manage timers for different projects, manually log time entries, and review reports directly inside the terminal user interface (TUI).
+Samay is a Go application that lets you track work entirely from the terminal. It stores data locally inside your Dropbox folder, offers a Bubble Tea interface for daily use, and keeps the old command-line workflows around as future enhancements.
 
 Why?
 ----
 
-*   I never find a time tracker that I like to use.
-*   My terminal is always open when my laptop is open.
-*   I wanted to learn Go and Protocol Buffers.
+* Frustration with existing time trackers.
+* The terminal is always open.
+* A playground for learning Go, Protocol Buffers, and Bubble Tea.
 
-So, here it is.
+Highlights
+----------
 
-Unique features
----------------
+* TUI for starting and stopping timers, adding manual entries, and reviewing history.
+* Data stored as Protocol Buffers under `~/Dropbox/Samay` for easy syncing.
+* Built-in monthly report and weekly overview views.
 
-*   Simple command-line interface.
-*   Interactive Terminal User Interface (TUI).
-*   Uses simple files to store data.
-*   Can detect and use a Dropbox folder for data synchronization.
-*   Reasonably fast.
-*   Basic monthly reporting.
+Prerequisites
+-------------
 
-Getting Started
----------------
+* Go 1.23+ (the repo is configured with the Go 1.24.2 toolchain).
+* Dropbox desktop client installed with a valid `~/.dropbox/host.db` file—Samay reads this file to locate your synced folder and will panic if it is missing.
+* Make sure there is no existing `~/Dropbox/Samay` directory that you care about before running the app; Samay will create and manage that directory.
 
-### Building from source
+Installation
+------------
 
-To build the application from the source code, you'll need to have Go installed.
+```sh
+git clone https://github.com/nexneo/samay.git
+cd samay
+go build
+```
 
-1.  **Clone the repository:**
+The build produces a `samay` binary in the repository root. `./dev.sh` is a helper that rebuilds and immediately runs the binary during iterative development.
 
-    ```sh
-    git clone https://github.com/nexneo/samay.git
-    cd samay
-    ```
+Running Samay
+-------------
 
-2.  **Build the application:**
-
-    ```sh
-    go build
-    ```
-
-    This will create an executable file named `samay` in the project's root directory.
-
-Usage
------
-
-Samay currently launches directly into the Bubble Tea TUI. The legacy command examples below remain for reference but are not wired up in the current build.
-
-### Interactive TUI
-
-To use the interactive TUI, run `samay` without any arguments:
+Launch the interface with:
 
 ```sh
 ./samay
 ```
 
-This will open a terminal user interface where you can manage your projects and time entries.
+The TUI opens to a project list sourced from `~/Dropbox/Samay`. Use the arrow keys (or `j`/`k`) to highlight a project and press `Enter` to open it. From there:
 
-### Command-Line Interface
+* `s` starts a timer. The project is persisted as soon as you start tracking against it.
+* `p` stops the active timer and prompts for a summary message.
+* `e` records a manual entry—enter a duration such as `45m` or `1h30m`, then the description.
+* `l` shows the project log with scrollable history (`↑/↓/PgUp/PgDn`), and `a` toggles between recent entries and the full timeline.
+* `v` lists entries so you can review details, move them to another project, or delete them.
+* `r` renames the project; `d` deletes it.
 
-#### Start/Stop timer
+At the project list level, press `r` to open the monthly report for the highlighted month and `o` for the weekly overview dashboard. `Esc` navigates back; `q` quits from anywhere.
 
-```sh
-# Start the timer for a project
-./samay start "My Project"
+Data Storage
+------------
 
-# Stop the timer and add a message
-./samay stop "My Project" -m "Finished the first feature"
-```
+Samay keeps each project under a SHA1-named directory inside `~/Dropbox/Samay`. Every project directory contains a `project.db` file and an `entries/` folder with per-entry protocol buffer records. Timers in progress live next to those entries as `timer.db`. Because of this layout, Dropbox synchronizes your tracked time automatically across machines.
 
-If you don't specify a message with `-m`, your default editor will open to enter the message.
+Development & Testing
+---------------------
 
-#### Log time directly
-
-```sh
-# Log 1.5 hours for a project
-./samay entry "My Project" -d 1.5h -m "Team meeting"
-```
-
-A duration string is a sequence of decimal numbers, each with an optional fraction and a unit suffix, such as "300m", "1.5h", or "2h45m". Valid time units are "s", "m", and "h".
-
-Twitter-style #hashtags are supported in the log message. For example, a message like "Some time spent in #project #management" will create two tags, "project" and "management", for that entry.
-
-#### Reporting
-
-```sh
-# Generate a report for the current month
-./samay report
-
-# Generate a report for a specific month (e.g., March)
-./samay report -r 3
-```
-
-#### Web interface (legacy)
-
-```sh
-# Start the web interface
-./samay web
-```
-
-The dedicated web server has been removed; running `samay web` currently launches the TUI like any other invocation.
-
-#### Other commands
-
-*   `./samay log "My Project"`: Legacy command that is planned to become a richer TUI log view.
-*   `./samay remove "My Project"`: Legacy command; a TUI replacement for project/entry removal is tracked via TODO markers in the codebase.
-
-Development
------------
-
-### Running tests
-
-To run the tests, use the standard Go test command:
+Run the full test suite with:
 
 ```sh
 go test ./...
 ```
 
-### Dependencies
+Regenerate protocol buffer code after editing `data/models.proto` using `protoc --go_out=. data/models.proto` (requires `protoc` installed). Dependencies are managed through Go modules; see `go.mod` for the current set.
 
-Project dependencies are managed using Go modules and are defined in the `go.mod` file. The main dependencies are:
+Troubleshooting
+---------------
 
-*   **Protocol Buffers:** For data serialization.
-*   **Bubble Tea:** For the terminal user interface.
-
-Caveats
--------
-
-*   If you have a folder named "Samay" in your Dropbox root, please rename it before running this utility.
-*   This software comes with NO WARRANTIES.
+* Missing Dropbox metadata (`~/.dropbox/host.db`) causes the app to panic on startup. Install Dropbox or generate the file before running Samay.
+* If the interface launches with an empty project list, seed `~/Dropbox/Samay` with at least one project directory (containing a `project.db` file) before restarting. Project creation inside the TUI is on the roadmap.
+* Samay is provided without warranty—use at your own risk.
