@@ -16,14 +16,14 @@ Highlights
 ----------
 
 * TUI for starting and stopping timers, adding manual entries, and reviewing history.
-* Data stored as Protocol Buffers under `~/Dropbox/Samay` for easy syncing.
+* Data stored as Protocol Buffers under `~/Dropbox/Samay` when available, or your local config directory otherwise.
 * Built-in monthly report and weekly overview views.
 
 Prerequisites
 -------------
 
 * Go 1.23+ (the repo is configured with the Go 1.24.2 toolchain).
-* Dropbox desktop client installed with a valid `~/.dropbox/host.db` file—Samay reads this file to locate your synced folder and will panic if it is missing.
+* Optional: Dropbox desktop client with a valid `~/.dropbox/host.db` file so Samay can sync via `~/Dropbox/Samay`; otherwise data is stored under your user config directory (for example `~/.config/samay`).
 * Make sure there is no existing `~/Dropbox/Samay` directory that you care about before running the app; Samay will create and manage that directory.
 
 Installation
@@ -60,7 +60,7 @@ At the project list level, press `r` to open the monthly report for the highligh
 Data Storage
 ------------
 
-Samay keeps each project under a SHA1-named directory inside `~/Dropbox/Samay`. Every project directory contains a `project.db` file and an `entries/` folder with per-entry protocol buffer records. Timers in progress live next to those entries as `timer.db`. Because of this layout, Dropbox synchronizes your tracked time automatically across machines.
+Samay keeps each project under a SHA1-named directory inside `~/Dropbox/Samay` (or whichever base path Samay resolves). Every project directory contains a `project.db` file and an `entries/` folder with per-entry protocol buffer records. Timers in progress live next to those entries as `timer.db`. Dropbox synchronizes your tracked time automatically across machines when you use its folder.
 
 Development & Testing
 ---------------------
@@ -76,6 +76,6 @@ Regenerate protocol buffer code after editing `data/models.proto` using `protoc 
 Troubleshooting
 ---------------
 
-* Missing Dropbox metadata (`~/.dropbox/host.db`) causes the app to panic on startup. Install Dropbox or generate the file before running Samay.
+* Set `SAMAY_DATA_DIR` to override the storage directory. When Dropbox metadata is missing, Samay falls back to your user config directory so you can run tests and local builds without Dropbox installed.
 * If the interface launches with an empty project list, seed `~/Dropbox/Samay` with at least one project directory (containing a `project.db` file) before restarting. Project creation inside the TUI is on the roadmap.
 * Samay is provided without warranty—use at your own risk.

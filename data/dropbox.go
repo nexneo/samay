@@ -3,7 +3,6 @@ package data
 import (
 	"encoding/base64"
 	"errors"
-
 	"os"
 	"os/user"
 	"path/filepath"
@@ -43,37 +42,16 @@ func (d *Dropbox) Init() error {
 		return d.setBasePath(envPath)
 	}
 
-	stderr := errors.New("Dropbox folder can't be detected")
-
-	// read current user's dropbox host.db file
-	current_user, _ := user.Current()
-	dat, err := os.ReadFile(
-		current_user.HomeDir + "/.dropbox/host.db",
-	)
+	homeDir, err := resolveHomeDir()
 	if err != nil {
 		return err
 	}
 
-	// read bytes and get second line from host.db
-	datStr := string(dat)
-
-	if lines := strings.Split(datStr, "\n"); len(lines) < 2 {
-		return stderr
-	} else {
-		datStr = lines[1]
+	if dropboxPath, err := detectDropboxBasePath(homeDir); err == nil && dropboxPath != "" {
+		return d.setBasePath(filepath.Join(dropboxPath, "Samay"))
 	}
 
-	// second line is base64 encoded Dropbox path
-	dropboxPath, err := base64.StdEncoding.DecodeString(datStr)
-	if err != nil {
-		return err
-	}
-
-	if len(dropboxPath) != 0 {
-		return d.setBasePath(filepath.Join(string(dropboxPath), "Samay"))
-	}
-
-	return stderr
+	return d.setBasePath(defaultDataDir(homeDir))
 }
 
 func (d *Dropbox) setBasePath(path string) error {
@@ -128,4 +106,38 @@ func (d *Dropbox) Projects() (projects []*Project) {
 		}
 	}
 	return
+}
+
+func detectDropboxBasePath(homeDir string) (string, error) {
+	hostPath := filepath.Join(homeDir, ".dropbox", "host.db")
+	dat, err := os.ReadFile(hostPath)
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(string(dat), "\n")
+	if len(lines) < 2 {
+		return "", errors.New("dropbox host.db missing expected data")
+	}
+
+	dropboxPath, err := base64.StdEncoding.DecodeString(lines[1])
+	if err != nil {
+		return "", err
+	}
+
+	return string(dropboxPath), nil
+}
+
+func resolveHomeDir() (string, error) {
+	if current, err := user.Current(); err == nil && current.HomeDir != "" {
+		return current.HomeDir, nil
+	}
+	return os.UserHomeDir()
+}
+
+func defaultDataDir(homeDir string) string {
+	if configDir, err := os.UserConfigDir(); err == nil && configDir != "" {
+		return filepath.Join(configDir, "samay")
+	}
+	return filepath.Join(homeDir, ".samay")
 }
