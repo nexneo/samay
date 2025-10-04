@@ -33,19 +33,14 @@ Samay is a Go application that lets you track work entirely from the terminal. I
 
 ## Installation
 
-```sh
-git clone https://github.com/nexneo/samay.git
-cd samay
-go build
-```
-
-The build produces a `samay` binary in the repository root. `./dev.sh` is a helper that rebuilds and immediately runs the binary during iterative development.
-
-You can also install directly using the Go toolchain:
+Install Samay with the Go toolchain so you always pull the latest tagged release. On macOS the shortest path is to use Homebrew for Go itself, then install Samay in one step:
 
 ```sh
+brew install go
 go install github.com/nexneo/samay@latest
 ```
+
+The binary ends up at `$(go env GOPATH)/bin/samay` (typically `~/go/bin/samay`); add that directory to your `PATH` if it is not already there.
 
 ## Running Samay
 
