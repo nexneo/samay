@@ -68,7 +68,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 			totalDur := time.Duration(totalDuration)
 			totalStr := data.HmFromD(totalDur) // Use a helper if HmFromD not available
 			// Right-align the total within a reasonable width (e.g., 18 chars like original)
-			totalLine := fmt.Sprintf("%9s", totalStr)
+			totalLine := fmt.Sprintf("%2s %-8s", "", totalStr)
 			sb.WriteString(logTotalStyle.Render(totalLine))
 			sb.WriteString("\n") // Newline after total
 		}
