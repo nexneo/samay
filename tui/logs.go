@@ -19,7 +19,7 @@ func (a app) logTitleView() string {
 
 // Helper view for log help
 func (a app) logHelpView() string {
-	return helpStyle.Render("↑/↓/j/k: scroll | esc: back | q: quit")
+	return helpStyle.Render("↑/↓/j/k: scroll | a: toggle range | esc: back | q: quit")
 }
 
 // formatProjectLogs generates the log string for the viewport
@@ -39,6 +39,9 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 	var total int64
 	now := time.Now()
 	maxEntries := 30 // Limit number of entries displayed
+	if a.logShowAll {
+		maxEntries = len(entries)
+	}
 
 	printHeader := func(ty *time.Time) {
 		headerStr := ""
