@@ -6,7 +6,6 @@ toolchain go1.24.2
 
 require (
 	github.com/charmbracelet/bubbletea v1.3.4
-	github.com/gorilla/mux v1.8.1
 	github.com/samber/lo v1.49.1
 	google.golang.org/protobuf v1.36.6
 )

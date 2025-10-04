@@ -6,7 +6,7 @@ Command-line Time tracking and reporting
 
 Samay is a command-line time tracking tool for developers. It's designed for those who are comfortable working in the terminal. The name "Samay" is the Hindi word for "Time."
 
-The tool allows you to start and stop timers for different projects, manually log time entries, and generate reports. It also includes a web interface to visualize project data and a terminal user interface (TUI) for interactive use.
+The tool allows you to manage timers for different projects, manually log time entries, and review reports directly inside the terminal user interface (TUI).
 
 Why?
 ----
@@ -26,7 +26,6 @@ Unique features
 *   Can detect and use a Dropbox folder for data synchronization.
 *   Reasonably fast.
 *   Basic monthly reporting.
-*   Web interface for data visualization.
 
 Getting Started
 ---------------
@@ -53,7 +52,7 @@ To build the application from the source code, you'll need to have Go installed.
 Usage
 -----
 
-The application is run from the command line with various commands and flags.
+Samay currently launches directly into the Bubble Tea TUI. The legacy command examples below remain for reference but are not wired up in the current build.
 
 ### Interactive TUI
 
@@ -100,19 +99,19 @@ Twitter-style #hashtags are supported in the log message. For example, a message
 ./samay report -r 3
 ```
 
-#### Web interface
+#### Web interface (legacy)
 
 ```sh
 # Start the web interface
 ./samay web
 ```
 
-This will start a web server on port 8080 by default. You can access it at `http://localhost:8080`.
+The dedicated web server has been removed; running `samay web` currently launches the TUI like any other invocation.
 
 #### Other commands
 
-*   `./samay log "My Project"`: Show the last 10 time entries for a project.
-*   `./samay remove "My Project"`: Remove a project and all its data.
+*   `./samay log "My Project"`: Legacy command that is planned to become a richer TUI log view.
+*   `./samay remove "My Project"`: Legacy command; a TUI replacement for project/entry removal is tracked via TODO markers in the codebase.
 
 Development
 -----------
@@ -131,7 +130,6 @@ Project dependencies are managed using Go modules and are defined in the `go.mod
 
 *   **Protocol Buffers:** For data serialization.
 *   **Bubble Tea:** For the terminal user interface.
-*   **Gorilla Mux:** For the web server.
 
 Caveats
 -------

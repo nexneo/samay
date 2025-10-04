@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-This project, "Samay," is a command-line time tracking tool written in Go. It's designed for developers who are comfortable working in the terminal. The name "Samay" is the Hindi word for "Time."
+This project, "Samay," is a terminal-first time tracking tool written in Go. It's designed for developers who are comfortable working in the terminal. The name "Samay" is the Hindi word for "Time."
 
-The tool allows users to start and stop timers for different projects, manually log time entries, and generate reports. It also includes a web interface to visualize project data. Data is stored locally in files, and the application can detect and use a Dropbox folder for data synchronization.
+The tool allows users to start and stop timers for different projects, manually log time entries, and review project logs inside the TUI. Data is stored locally in files, and the application can detect and use a Dropbox folder for data synchronization.
 
-The project uses Google's Protocol Buffers for data serialization, the `bubbletea` library for its terminal user interface (TUI), and the `gorilla/mux` router for its web component.
+The project uses Google's Protocol Buffers for data serialization and the `bubbletea` library for its terminal user interface (TUI).
 
 ## Building and Running
 
@@ -22,42 +22,7 @@ This will create an executable file named `samay` in the project's root director
 
 ### Running the application
 
-The application is run from the command line with various commands and flags.
-
-**Starting and stopping the timer:**
-
-```sh
-# Start the timer for a project
-./samay start "My Project"
-
-# Stop the timer and add a message
-./samay stop "My Project" -m "Finished the first feature"
-```
-
-**Logging time directly:**
-
-```sh
-# Log 1.5 hours for a project
-./samay entry "My Project" -d 1.5h -m "Team meeting"
-```
-
-**Generating reports:**
-
-```sh
-# Generate a report for the current month
-./samay report
-
-# Generate a report for a specific month (e.g., March)
-./samay report -r 3
-```
-
-**Running the web interface:**
-
-```sh
-./samay web
-```
-
-This will start a web server on port 8080 by default. You can access it at `http://localhost:8080`.
+Running the `samay` binary with no arguments launches the Bubble Tea terminal user interface. The legacy command-line subcommands (e.g., `start`, `stop`, `report`, `web`) are currently unreachable because the application exits after starting the TUI, and the old `web` server implementation has been removed.
 
 ### Development
 
@@ -67,7 +32,7 @@ The `dev.sh` script provides a convenient way to build and run the application f
 ./dev.sh
 ```
 
-This script builds the application and then runs the `report chores` command.
+This script builds the application and then launches the TUI (the `report chores` invocation winds up starting the interface for now).
 
 ## Development Conventions
 
