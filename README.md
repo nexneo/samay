@@ -45,7 +45,7 @@ Launch the interface with:
 ./samay
 ```
 
-The TUI opens to a project list sourced from `~/Dropbox/Samay`. Use the arrow keys (or `j`/`k`) to highlight a project and press `Enter` to open it. From there:
+The TUI opens to a project list sourced from `~/Dropbox/Samay`. Use the arrow keys (or `j`/`k`) to highlight a project and from there:
 
 - `s` starts a timer. The project is persisted as soon as you start tracking against it.
 - `p` stops the active timer and prompts for a summary message.
