@@ -1,7 +1,7 @@
 Output demo.gif
 Set TypingSpeed 70ms
 Set FontSize 36
-Set Height 1200
+Set Height 1500
 Set Width 2000
 Set WindowBar Colorful
 Set BorderRadius 10
@@ -27,4 +27,3 @@ Enter
 Sleep 2s
 Type "v"
 Sleep 4s
-
