@@ -1,64 +1,32 @@
 package data
 
-import (
-	"google.golang.org/protobuf/proto"
-
-	"os"
-)
-
-// Saves Protocol Message to file
+// Save writes the persistable entity to its canonical location using the default store backend.
 func Save(ps Persistable) error {
-	_, err := os.Stat(ps.Location())
-	if os.IsNotExist(err) {
-		return write(ps)
-	}
-
-	return err
+	return defaultStore.save(ps)
 }
 
+// Update overwrites the stored representation even if it already exists on disk.
 func Update(ps Persistable) error {
-	return write(ps)
+	return defaultStore.update(ps)
 }
 
+// Persisted reports whether the entity already has on-disk state without surfacing lookup errors.
 func Persisted(ps Persistable) bool {
-	return Load(ps) == nil
+	persisted, err := defaultStore.persisted(ps)
+	return err == nil && persisted
 }
 
-func write(ps Persistable) error {
-	data, err := proto.Marshal(ps)
-	if err != nil {
-		return err
-	}
-
-	// create dir if doesn't exists, etc
-	err = ps.prepareForSave()
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(ps.Location(), data, 0666)
-}
-
+// Load hydrates the entity from its location, leaving validation to the caller.
 func Load(ps Persistable) error {
-	return LoadFromPath(ps.Location(), ps)
+	return defaultStore.load(ps)
 }
 
+// LoadFromPath hydrates an entity from an explicit path, bypassing Location-derived lookup.
 func LoadFromPath(path string, ps Persistable) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	return proto.Unmarshal(data, ps)
+	return defaultStore.loadFromPath(path, ps)
 }
 
+// Destroy removes the entity's persisted form and runs its cleanup hook.
 func Destroy(ps Destroyable) error {
-	err := os.Remove(ps.Location())
-	if os.IsNotExist(err) {
-		err = nil
-	} else if err != nil {
-		return err
-	}
-	err = ps.cleanupAfterRemove()
-	return err
+	return defaultStore.destroy(ps)
 }

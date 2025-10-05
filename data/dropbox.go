@@ -3,12 +3,11 @@ package data
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
-
-	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -24,14 +23,17 @@ func init() {
 
 type Dropbox struct {
 	BasePath string
+	store    *Store
+	repos    repositorySet
 }
 
+// String returns the resolved Dropbox data directory for debugging and logging.
 func (d Dropbox) String() string {
 	return d.BasePath
 }
 
-// reads ~/.dropbox/host.db and detects location of Dropbox folder
-// and create BasePath directory if doesn't exists
+// Init discovers and prepares the on-disk store, falling back to ~/.samay when Dropbox is unavailable.
+// It is safe to call multiple times and only reconfigures when BasePath has not been seeded.
 func (d *Dropbox) Init() error {
 	if d.BasePath != "" {
 		// nothing to do
@@ -51,7 +53,12 @@ func (d *Dropbox) Init() error {
 		return d.setBasePath(filepath.Join(dropboxPath, "Samay"))
 	}
 
-	return d.setBasePath(defaultDataDir(homeDir))
+	if err := d.setBasePath(defaultDataDir(homeDir)); err != nil {
+		return err
+	}
+	d.store = defaultStore
+	d.repos = newFilesystemRepositories(d, d.store)
+	return nil
 }
 
 func (d *Dropbox) setBasePath(path string) error {
@@ -69,22 +76,34 @@ func (d *Dropbox) setBasePath(path string) error {
 	}
 
 	d.BasePath = absolute
+	if d.store == nil {
+		d.store = defaultStore
+	}
+	d.repos = newFilesystemRepositories(d, d.store)
 	return nil
 }
 
-// SetBasePath overrides the Dropbox base path. Intended for tests.
+// SetBasePath overrides the Dropbox base path and rebuilds the repository set. Intended for tests.
 func SetBasePath(path string) error {
 	return DB.setBasePath(path)
 }
 
+// ProjectDirPath returns the folder dedicated to the given project's data within the Dropbox tree.
 func (d *Dropbox) ProjectDirPath(p *Project) string {
 	return d.BasePath + "/" + p.GetShaFromName()
 }
 
+// EntryDirPath returns the directory where entries for the entry's project are stored.
 func (d *Dropbox) EntryDirPath(e *Entry) string {
-	return DB.ProjectDirPath(e.GetProject()) + "/entries"
+	return d.EntryDirForProject(e.GetProject())
 }
 
+// EntryDirForProject resolves the entries directory for the provided project.
+func (d *Dropbox) EntryDirForProject(p *Project) string {
+	return d.ProjectDirPath(p) + "/entries"
+}
+
+// MkProjectDir ensures the project directory exists, ignoring the error when it already does.
 func (d *Dropbox) MkProjectDir(p *Project) (err error) {
 	if err = os.Mkdir(d.ProjectDirPath(p), 0755); os.IsExist(err) {
 		err = nil
@@ -93,19 +112,14 @@ func (d *Dropbox) MkProjectDir(p *Project) (err error) {
 	return
 }
 
-func (d *Dropbox) Projects() (projects []*Project) {
-	folders, err := os.ReadDir(d.BasePath)
+// Projects returns all discoverable projects under the Dropbox base path, logging unreadable entries.
+func (d *Dropbox) Projects() []*Project {
+	projects, err := d.repos.projects.All()
 	if err != nil {
-		return
+		fmt.Println("Failed to list projects:", err)
+		return nil
 	}
-	for _, dir := range folders {
-		project := new(Project)
-		project.Sha = proto.String(dir.Name())
-		if err = Load(project); err == nil {
-			projects = append(projects, project)
-		}
-	}
-	return
+	return projects
 }
 
 func detectDropboxBasePath(homeDir string) (string, error) {

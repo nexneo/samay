@@ -24,12 +24,14 @@ type ProjectStatus struct {
 	hoursMins
 }
 
+// OnClock reports whether the project currently has a running timer and returns it when present.
 func (project *Project) OnClock() (bool, *Timer) {
 	timer := GetTimer(project)
 	return timer.GetStarted() > 0, timer
 }
 
-// fetch status of project in goroutine and return on channel
+// Status streams a snapshot of the project's current hours and timer state over the provided channel.
+// The work is performed asynchronously so callers can aggregate multiple projects concurrently.
 func (project *Project) Status(statues chan *ProjectStatus) {
 	go func() {
 		status := new(ProjectStatus)
@@ -72,15 +74,17 @@ func hoursMinsFromDuration(d time.Duration) (ret hoursMins) {
 	return
 }
 
+// HmFromD converts a duration into an hours/minutes pair for display purposes.
 func HmFromD(d time.Duration) hoursMins {
 	return hoursMinsFromDuration(d)
 }
 
-// consistent string presentation of hoursMins
+// String returns a trimmed HH:MM representation suitable for aligned terminal output.
 func (hm hoursMins) String() string {
 	return strings.Trim(fmt.Sprintf("%3d:%02d", hm.hours, hm.mins), " ")
 }
 
+// PrintProjectLog prints the 30 most recent entries for the project grouped by day and subtotaled.
 func PrintProjectLog(project *Project) {
 	printHeader := func(ty *time.Time) {
 		headerStr := "           "
@@ -127,6 +131,8 @@ func PrintProjectLog(project *Project) {
 	fmt.Println()
 }
 
+// PrintProjectStatus renders an overview of each project's tracked hours for the given month.
+// It derives the year boundary automatically so callers can pass future months in the same year.
 func PrintProjectStatus(month int) {
 	statues := make(chan *ProjectStatus)
 	var counter int

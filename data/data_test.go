@@ -260,8 +260,8 @@ func TestEntryDurationHelpers(t *testing.T) {
 	if minutes := entry.Minutes(); minutes != 90 {
 		t.Fatalf("expected 90 minutes, got %v", minutes)
 	}
-	if hm := entry.HoursMins(); hm.String() != "  1:30" {
-		t.Fatalf("expected formatted string '  1:30', got %q", hm.String())
+	if hm := entry.HoursMins(); hm.String() != "1:30" {
+		t.Fatalf("expected formatted string '1:30', got %q", hm.String())
 	}
 }
 
