@@ -77,7 +77,9 @@ func TestTimerCreation(t *testing.T) {
 	if err := data.Save(timer); err != nil {
 		t.Error(err.Error())
 	}
-	os.RemoveAll(data.DB.ProjectDirPath(project))
+	if err := os.RemoveAll(data.DB.ProjectDirPath(project)); err != nil {
+		t.Fatalf("cleanup project dir: %v", err)
+	}
 }
 
 func TestTimerStop(t *testing.T) {
@@ -113,7 +115,9 @@ func TestTimerStop(t *testing.T) {
 			e.GetDuration(),
 		)
 	}
-	os.RemoveAll(data.DB.ProjectDirPath(project))
+	if err := os.RemoveAll(data.DB.ProjectDirPath(project)); err != nil {
+		t.Fatalf("cleanup project dir: %v", err)
+	}
 }
 
 func TestTimerLoad(t *testing.T) {
@@ -131,7 +135,9 @@ func TestTimerLoad(t *testing.T) {
 	if timer2.GetStarted() != timer.GetStarted() {
 		t.Fail()
 	}
-	os.RemoveAll(data.DB.ProjectDirPath(project))
+	if err := os.RemoveAll(data.DB.ProjectDirPath(project)); err != nil {
+		t.Fatalf("cleanup project dir: %v", err)
+	}
 }
 
 func TestDestroyRemovesProjectDirectory(t *testing.T) {
@@ -186,7 +192,9 @@ func TestProjectEntriesReturnsSortedEntries(t *testing.T) {
 			t.Fatalf("entries not sorted by descending end time: %v before %v", prevEnded, currEnded)
 		}
 	}
-	os.RemoveAll(data.DB.ProjectDirPath(project))
+	if err := os.RemoveAll(data.DB.ProjectDirPath(project)); err != nil {
+		t.Fatalf("cleanup project dir: %v", err)
+	}
 }
 
 func TestTimerDuration(t *testing.T) {
@@ -196,7 +204,9 @@ func TestTimerDuration(t *testing.T) {
 	if elapsed := timer.Duration(); elapsed < time.Minute {
 		t.Fatalf("expected at least 1 minute elapsed, got %v", elapsed)
 	}
-	os.RemoveAll(data.DB.ProjectDirPath(project))
+	if err := os.RemoveAll(data.DB.ProjectDirPath(project)); err != nil {
+		t.Fatalf("cleanup project dir: %v", err)
+	}
 }
 
 func TestCreateEntryWithDuration(t *testing.T) {
@@ -250,7 +260,9 @@ func TestProjectStartAndStopTimer(t *testing.T) {
 	if _, err := os.Stat(data.DB.ProjectDirPath(project) + "/timer.db"); !os.IsNotExist(err) {
 		t.Fatalf("expected timer file removed, got: %v", err)
 	}
-	os.RemoveAll(data.DB.ProjectDirPath(project))
+	if err := os.RemoveAll(data.DB.ProjectDirPath(project)); err != nil {
+		t.Fatalf("cleanup project dir: %v", err)
+	}
 }
 
 func TestEntryDurationHelpers(t *testing.T) {
@@ -260,8 +272,8 @@ func TestEntryDurationHelpers(t *testing.T) {
 	if minutes := entry.Minutes(); minutes != 90 {
 		t.Fatalf("expected 90 minutes, got %v", minutes)
 	}
-	if hm := entry.HoursMins(); hm.String() != "  1:30" {
-		t.Fatalf("expected formatted string '  1:30', got %q", hm.String())
+	if hm := entry.HoursMins(); hm.String() != "1:30" {
+		t.Fatalf("expected formatted string '1:30', got %q", hm.String())
 	}
 }
 
@@ -288,7 +300,9 @@ func TestPersistedAndUpdate(t *testing.T) {
 	if reloaded.GetCompany() != "Acme Co" {
 		t.Fatalf("expected updated company, got %q", reloaded.GetCompany())
 	}
-	os.RemoveAll(data.DB.ProjectDirPath(project))
+	if err := os.RemoveAll(data.DB.ProjectDirPath(project)); err != nil {
+		t.Fatalf("cleanup project dir: %v", err)
+	}
 }
 
 func TestDropboxString(t *testing.T) {

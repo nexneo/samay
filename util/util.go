@@ -13,9 +13,8 @@ import (
 )
 
 func SHA1(in string) string {
-	h := sha1.New()
-	io.WriteString(h, in)
-	return hex.EncodeToString(h.Sum(nil))
+	sum := sha1.Sum([]byte(in))
+	return hex.EncodeToString(sum[:])
 }
 
 // based on suggestions from,
@@ -68,9 +67,12 @@ func ReadDir(dirname string) ([]os.FileInfo, error) {
 		return nil, err
 	}
 	list, err := f.Readdir(-1)
-	f.Close()
+	closeErr := f.Close()
 	if err != nil {
 		return nil, err
+	}
+	if closeErr != nil {
+		return nil, closeErr
 	}
 	sort.Sort(byModTime(list))
 	return list, nil

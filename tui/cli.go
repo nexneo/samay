@@ -493,7 +493,7 @@ func detailLine(label, value string) string {
 	if value == "" {
 		value = "—"
 	}
-	labelRendered := detailLabelStyle.Copy().Width(12).Render(label)
+	labelRendered := detailLabelStyle.Width(12).Render(label)
 	return lipgloss.JoinHorizontal(lipgloss.Left, labelRendered, detailValueStyle.Render(value))
 }
 

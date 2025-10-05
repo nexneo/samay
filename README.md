@@ -10,7 +10,7 @@ Samay is a Go application that lets you track work entirely from the terminal. I
 
 ## Why?
 
-- Frustration with existing time trackers.
+- Frustration with existing time trackers, slow, complex.
 - The terminal is always open.
 - A playground for learning Go, Protocol Buffers, and Bubble Tea.
 
