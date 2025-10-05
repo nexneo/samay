@@ -1,4 +1,4 @@
-name: PR Tests
+name: Tests
 
 on:
   pull_request:
@@ -8,12 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: "1.24.2"
+          go-version: "latest"
           cache: true
 
       - name: Run tests
