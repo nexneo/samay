@@ -58,11 +58,13 @@ func (d entryItemDelegate) Render(w io.Writer, m list.Model, index int, listItem
 
 	if index == m.Index() {
 		highlight := selectedItemStyle.PaddingLeft(4)
-		fmt.Fprint(w, highlight.Render(line))
+		if _, err := fmt.Fprint(w, highlight.Render(line)); err != nil {
+			return
+		}
 		return
 	}
 
-	fmt.Fprint(w, itemStyle.Render(line))
+	_, _ = fmt.Fprint(w, itemStyle.Render(line))
 }
 
 func buildEntryList(project *data.Project, width, height int) list.Model {

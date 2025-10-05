@@ -35,7 +35,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 	}
 
 	var sb strings.Builder
-	var day int = -1 // Initialize day to -1 to ensure the first header prints
+	day := -1 // Initialize day to -1 to ensure the first header prints
 	var total int64
 	now := time.Now()
 	maxEntries := 30 // Limit number of entries displayed

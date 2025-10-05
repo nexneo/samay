@@ -212,7 +212,9 @@ func (project *Project) StopTimer(c string, bill bool) (err error) {
 
 // StartTimer persists the project if needed and records a fresh timer instance on disk.
 func (project *Project) StartTimer() (err error) {
-	Save(project)
+	if err = Save(project); err != nil {
+		return
+	}
 	timer := CreateTimer(project)
 	err = Save(timer)
 	return
