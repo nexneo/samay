@@ -5,7 +5,7 @@ Terminal-first time tracking and reporting.
 Samay is a Go application that lets you track work entirely from the terminal. It stores data locally inside your Dropbox folder, offers a Bubble Tea interface for daily use, and keeps the old command-line workflows around as future enhancements.
 
 <p align="center">
-  <img alt="Weekly overview" src="https://github.com/user-attachments/assets/48605f74-69d6-4eee-a65f-b1b29253ee45" width="63%" />
+  <img alt="Weekly overview" src="https://github.com/user-attachments/assets/48605f74-69d6-4eee-a65f-b1b29253ee45" />
 </p>
 
 ## Why?
