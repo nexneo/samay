@@ -37,6 +37,16 @@ go install github.com/nexneo/samay@latest
 
 The binary ends up at `$(go env GOPATH)/bin/samay` (typically `~/go/bin/samay`); add that directory to your `PATH` if it is not already there.
 
+## Version
+
+Check the installed version with:
+
+```sh
+samay --version
+```
+
+When cutting a release, update the constant in `util/version/version.go` and create a matching Git tag (for example `v1.0.0`) so `go install github.com/nexneo/samay@latest` resolves to the correct binary.
+
 ## Running Samay
 
 Launch the interface with:
