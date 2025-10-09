@@ -94,3 +94,44 @@ func entryFromListItem(i list.Item) *data.Entry {
 	}
 	return nil
 }
+
+func (a *app) handleKeypressEntryList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch keypress := msg.String(); keypress {
+	case "ctrl+c", "q":
+		return a, tea.Quit
+	case "esc":
+		a.state = stateProjectMenu
+		a.errorMessage = ""
+		return a, nil
+	case "m":
+		entry := entryFromListItem(a.entries.SelectedItem())
+		if entry == nil {
+			return a, nil
+		}
+		a.selectedEntry = entry
+		a.prepareMoveProjectList()
+		if len(a.moveProjects.Items()) == 0 {
+			a.errorMessage = "No other projects available to move this entry."
+			return a, nil
+		}
+		a.previousState = stateEntryList
+		a.state = stateMoveEntryTarget
+		return a, nil
+	case "d":
+		entry := entryFromListItem(a.entries.SelectedItem())
+		if entry != nil {
+			a.selectedEntry = entry
+			a.confirmEntry = entry
+			a.confirmAction = confirmDeleteEntry
+			a.confirmMessage = fmt.Sprintf("Delete entry '%s'?", truncateString(entry.GetContent(), 40))
+			a.previousState = stateEntryList
+			a.state = stateConfirm
+		}
+		return a, nil
+	}
+
+	var cmd tea.Cmd
+	a.entries, cmd = a.entries.Update(msg)
+	a.selectedEntry = entryFromListItem(a.entries.SelectedItem())
+	return a, cmd
+}

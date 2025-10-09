@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nexneo/samay/data"
 )
 
@@ -140,4 +141,26 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 	sb.WriteString("\n") // Extra newline at the end
 
 	return sb.String()
+}
+
+// when showing logs
+func (a *app) handleKeypressShowLogs(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	switch keypress := msg.String(); keypress {
+	case "ctrl+c", "q":
+		return a, tea.Quit
+	case "esc":
+		a.state = stateProjectMenu
+		a.errorMessage = "" // Clear log-related errors
+		return a, nil
+	case "a":
+		a.logShowAll = !a.logShowAll
+		a.ProjectLogUI()
+		return a, nil
+	}
+
+	// Handle viewport scrolling (up/down arrows, pgup/pgdown, j/k)
+	a.logViewport, cmd = a.logViewport.Update(msg)
+	return a, cmd
 }
