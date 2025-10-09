@@ -568,7 +568,7 @@ func (a app) View() string {
 			stopBillableLabel = "No"
 		}
 		stopBillableText := fmt.Sprintf("Billable: %s (enter to toggle)", stopBillableLabel)
-		stopBillableStyle := itemStyle.Copy()
+		stopBillableStyle := itemStyle
 		if a.stopEntryFocus == focusStopBillable {
 			stopBillableStyle = stopBillableStyle.Foreground(lipgloss.Color("170")).Bold(true)
 		}
@@ -594,7 +594,7 @@ func (a app) View() string {
 			manualBillableLabel = "No"
 		}
 		manualBillableText := fmt.Sprintf("Billable: %s (enter to toggle)", manualBillableLabel)
-		manualBillableStyle := itemStyle.Copy()
+		manualBillableStyle := itemStyle
 		if a.manualEntryFocus == focusBillable {
 			manualBillableStyle = manualBillableStyle.Foreground(lipgloss.Color("170")).Bold(true)
 		}
