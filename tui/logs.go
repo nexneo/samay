@@ -35,52 +35,82 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 		return itemStyle.Render("No log entries found for this project.")
 	}
 
+	const (
+		indexColWidth = 3
+		hoursColWidth = 7
+	)
+	columnSpacer := "  "
+	minContentWidth := indexColWidth + hoursColWidth + len(columnSpacer)*2 + 10
+	if width < minContentWidth {
+		width = minContentWidth
+	}
+
+	descMaxWidth := width - indexColWidth - hoursColWidth - len(columnSpacer)*2
+	if descMaxWidth < 10 {
+		descMaxWidth = 10
+	}
+
 	var sb strings.Builder
-	day := -1 // Initialize day to -1 to ensure the first header prints
-	var total int64
+	dayKey := -1 // Initialize day to ensure the first header prints
+	var dayTotal int64
 	now := time.Now()
 	maxEntries := 30 // Limit number of entries displayed
 	if a.logShowAll {
 		maxEntries = len(entries)
 	}
 
+	headerLine := fmt.Sprintf("%-*s%s%-*s%s%s",
+		indexColWidth,
+		"#",
+		columnSpacer,
+		hoursColWidth,
+		"Hours",
+		columnSpacer,
+		"Description",
+	)
+	separatorLine := strings.Repeat("-", len(headerLine))
+	indentForHeader := strings.Repeat(" ", indexColWidth+hoursColWidth+len(columnSpacer)*2)
+
+	sb.WriteString(logTitleStyle.Render(headerLine))
+	sb.WriteString("\n")
+	sb.WriteString(logTitleStyle.Render(separatorLine))
+	sb.WriteString("\n")
+
 	printHeader := func(ty *time.Time) {
-		headerStr := ""
+		var headerStr string
 		if now.Year() == ty.Year() && now.YearDay() == ty.YearDay() {
-			headerStr = fmt.Sprintf("%s%s", headerStr, "Today")
+			headerStr = "Today"
 		} else {
 			// Format as MM/DD or YYYY/MM/DD if different year
 			if now.Year() == ty.Year() {
-				headerStr = fmt.Sprintf("%s%s", headerStr, ty.Format("01/02")) // MM/DD
+				headerStr = ty.Format("01/02") // MM/DD
 			} else {
-				headerStr = fmt.Sprintf("%s%s", headerStr, ty.Format("2006/01/02")) // YYYY/MM/DD
+				headerStr = ty.Format("2006/01/02") // YYYY/MM/DD
 			}
 		}
 		sb.WriteString("\n")
-		sb.WriteString(logHeaderStyle.Render(headerStr))
+		sb.WriteString(logHeaderStyle.Render(indentForHeader + headerStr))
 		sb.WriteString("\n") // Newline after header
 	}
 
 	printTotal := func(totalDuration int64) {
-		if totalDuration != 0 {
-			// Use your existing HmFromD function if available and adapted
-			// Assuming HmFromD returns a struct with a String() method
-			// If HmFromD is not available, format manually:
-			totalDur := time.Duration(totalDuration)
-			totalStr := data.HmFromD(totalDur) // Use a helper if HmFromD not available
-			// Right-align the total within a reasonable width (e.g., 18 chars like original)
-			totalLine := fmt.Sprintf("%2s %-8s", "", totalStr)
-			sb.WriteString(logTotalStyle.Render(totalLine))
-			sb.WriteString("\n") // Newline after total
+		if totalDuration == 0 {
+			return
 		}
+		totalStr := data.HmFromD(time.Duration(totalDuration)).String()
+		totalLine := fmt.Sprintf("%-*s%s%-*s%s%s",
+			indexColWidth,
+			"",
+			columnSpacer,
+			hoursColWidth,
+			totalStr,
+			columnSpacer,
+			"",
+		)
+		sb.WriteString(logTotalStyle.Render(totalLine))
+		sb.WriteString("\n") // Newline after total
 	}
 	// --- End Helper Functions ---
-
-	// Main Title
-	sb.WriteString(logTitleStyle.Render(" #  Hours    Description"))
-	sb.WriteString("\n")
-	sb.WriteString(logTitleStyle.Render("------------------------------------")) // Separator
-	sb.WriteString("\n")
 
 	entryCount := 0
 	for i, entry := range entries {
@@ -93,51 +123,49 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 		ty, err := entry.EndedTime()
 		if err != nil {
 			// Handle error - maybe skip entry or show an error message?
-			sb.WriteString(errorStyle.Render(fmt.Sprintf("  Error getting time for entry %d: %v\n", i, err)))
+			sb.WriteString(errorStyle.Render(fmt.Sprintf("Error getting time for entry %d: %v\n", i, err)))
 			continue // Skip this entry
 		}
 
 		// Check if the day has changed
-		currentDay := ty.YearDay() // Use YearDay for comparison across year boundaries
-		if day != currentDay {
-			printTotal(total) // Print total for the previous day
-			printHeader(ty)   // Print header for the new day
-			day = currentDay  // Update the current day
-			total = 0         // Reset total for the new day
+		currentDayKey := ty.Year()*1000 + ty.YearDay()
+		if dayKey != currentDayKey {
+			printTotal(dayTotal) // Print total for the previous day
+			printHeader(ty)      // Print header for the new day
+			dayKey = currentDayKey
+			dayTotal = 0 // Reset total for the new day
 		}
 
 		// Add duration to total
+		durationStr := "--:--"
 		if entry.Duration != nil {
-			total += *entry.Duration
+			dayTotal += *entry.Duration
+			durationStr = data.HmFromD(time.Duration(*entry.Duration)).String()
 		}
 
-		// Format the entry line
-		// Adjust description length based on available width (simple truncation)
-		// Example: Max description width = total width - index width - hours width - padding
-		descMaxWidth := width - 4 - 8 - 4 // Rough estimate, adjust as needed
-		if descMaxWidth < 10 {
-			descMaxWidth = 10 // Minimum width
-		}
+		// Format description with rune-aware truncation
 		desc := entry.GetContent()
-		if len(desc) > descMaxWidth {
-			desc = desc[:descMaxWidth-3] + "..." // Truncate with ellipsis
+		descRunes := []rune(desc)
+		if len(descRunes) > descMaxWidth {
+			desc = string(descRunes[:descMaxWidth-3]) + "..."
 		}
 
-		// Use entry.HoursMins() if it exists and returns a string
-		// Otherwise format duration manually
-		hoursMinsStr := data.HmFromD(time.Duration(*entry.Duration)) // Use helper
-
-		// %2d: index (right-aligned, 2 spaces)
-		// %-8s: hours/mins (left-aligned, 8 spaces) - adjust width as needed
-		// %s: description
-		entryLine := fmt.Sprintf("%2d %-8s %s", entryCount+1, hoursMinsStr, desc)
+		entryLine := fmt.Sprintf("%-*d%s%-*s%s%s",
+			indexColWidth,
+			entryCount+1,
+			columnSpacer,
+			hoursColWidth,
+			durationStr,
+			columnSpacer,
+			desc,
+		)
 		sb.WriteString(logEntryStyle.Render(entryLine))
 		sb.WriteString("\n") // Newline after each entry
 		entryCount++
 	}
 
 	// Print the total for the last day
-	printTotal(total)
+	printTotal(dayTotal)
 	sb.WriteString("\n") // Extra newline at the end
 
 	return sb.String()

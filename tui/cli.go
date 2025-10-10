@@ -170,7 +170,8 @@ func CreateApp() *app {
 
 	// Viewport for logs
 	vp := viewport.New(defaultWidth, 20) // Initial size, will be updated
-	vp.SetContent("Loading logs...")     // Placeholder content
+	vp.Style = lipgloss.NewStyle().MarginLeft(2)
+	vp.SetContent("Loading logs...") // Placeholder content
 
 	reportVP := viewport.New(defaultWidth, 20)
 	reportVP.SetContent("Report will appear here")
