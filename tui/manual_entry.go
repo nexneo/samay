@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nexneo/samay/data"
 )
 
 // when asking for manual entry details
@@ -63,12 +62,12 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, nil
 		}
 
-		entry := a.project.CreateEntryWithDuration(message, duration, a.manualBillable)
-		if err = data.Save(entry); err != nil {
+		if _, err := a.project.CreateEntryWithDuration(message, duration, a.manualBillable); err != nil {
 			a.errorMessage = fmt.Sprintf("Error saving entry: %v", err)
 			return a, nil
 		}
 
+		a.refreshEntryList()
 		a.state = stateProjectMenu
 		a.manualTimeInput.Blur()
 		a.manualMsgInput.Blur()

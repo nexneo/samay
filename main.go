@@ -6,6 +6,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nexneo/samay/data"
 	"github.com/nexneo/samay/tui"
 	"github.com/nexneo/samay/util/version"
 )
@@ -18,6 +19,17 @@ func main() {
 		fmt.Println(version.String())
 		return
 	}
+
+	dbPath, err := data.ResolveDatabasePath()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "resolve database path: %v\n", err)
+		os.Exit(1)
+	}
+	if err := data.OpenDatabase(dbPath); err != nil {
+		fmt.Fprintf(os.Stderr, "open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer data.DB.Close()
 
 	p := tea.NewProgram(tui.CreateApp())
 	if _, err := p.Run(); err != nil {

@@ -121,8 +121,7 @@ func CreateApp() *app {
 		currentProject = projects[0]
 	}
 	items := lo.Map(projects, func(p *data.Project, _ int) list.Item {
-		name := *p.Name
-		return item(name)
+		return item(p.Name)
 	})
 	const defaultWidth = 20
 	listHeight := len(items)*2 + 5 // Adjust height based on items
@@ -454,7 +453,7 @@ func (a *app) entryDetailView(entry *data.Entry) string {
 
 	lines = append(lines, "")
 	lines = append(lines, detailSectionStyle.Render("Description"))
-	for line := range strings.SplitSeq(desc, "\n") {
+	for _, line := range strings.Split(desc, "\n") {
 		lines = append(lines, detailValueStyle.PaddingLeft(2).Render(line))
 	}
 
@@ -500,7 +499,7 @@ func (a *app) handleKeypressMoveEntryTarget(msg tea.KeyMsg) (tea.Model, tea.Cmd)
 		selected := a.moveProjects.SelectedItem()
 		if projectItem, ok := selected.(item); ok {
 			projects := lo.Filter(data.DB.Projects(), func(p *data.Project, _ int) bool {
-				return *p.Name == string(projectItem)
+				return p.Name == string(projectItem)
 			})
 			if len(projects) > 0 {
 				a.moveTargetProject = projects[0]
@@ -559,7 +558,11 @@ func (a app) View() string {
 
 	case stateStoppingTimer:
 		var lines []string
-		promptText := "Enter message for stopping timer (Project: " + *a.project.Name + ")"
+		projectName := ""
+		if a.project != nil {
+			projectName = a.project.Name
+		}
+		promptText := "Enter message for stopping timer (Project: " + projectName + ")"
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render(a.stopMessageInput.View()))
@@ -581,7 +584,11 @@ func (a app) View() string {
 
 	case stateManualEntry:
 		var lines []string
-		promptText := "Manually enter time for project: " + *a.project.Name
+		projectName := ""
+		if a.project != nil {
+			projectName = a.project.Name
+		}
+		promptText := "Manually enter time for project: " + projectName
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render("Duration (e.g., 1h30m):"))
@@ -621,7 +628,7 @@ func (a app) View() string {
 		if a.project == nil {
 			viewContent = errorStyle.Render("No project selected")
 		} else {
-			projectName := *a.project.Name
+			projectName := a.project.Name
 			header := titleStyle.MarginTop(1).Render(fmt.Sprintf("Project: %s", projectName))
 			entriesTitle := titleStyle.Render("Entries")
 			help := helpStyle.Render("↑/↓: navigate | m: move entry | d: delete | esc: back | q: quit")
@@ -656,7 +663,7 @@ func (a app) View() string {
 		var lines []string
 		lines = append(lines, titleStyle.MarginTop(1).Render("Rename project"))
 		if a.project != nil {
-			lines = append(lines, itemStyle.Render(fmt.Sprintf("Current name: %s", *a.project.Name)))
+			lines = append(lines, itemStyle.Render(fmt.Sprintf("Current name: %s", a.project.Name)))
 		}
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render(a.renameInput.View()))

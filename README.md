@@ -2,7 +2,7 @@
 
 Terminal-first time tracking and reporting.
 
-Samay is a Go application that lets you track work entirely from the terminal. It stores data locally inside your Dropbox folder, offers a Bubble Tea interface for daily use, and keeps the old command-line workflows around as future enhancements.
+Samay is a Go application that lets you track work entirely from the terminal. It stores data in a local SQLite database, offers a Bubble Tea interface for daily use, and keeps the old command-line workflows around as future enhancements.
 
 <p align="center">
   <img alt="Weekly overview" src="https://github.com/user-attachments/assets/48605f74-69d6-4eee-a65f-b1b29253ee45" />
@@ -12,19 +12,18 @@ Samay is a Go application that lets you track work entirely from the terminal. I
 
 - Frustration with existing time trackers, slow, complex.
 - The terminal is always open.
-- A playground for learning Go, Protocol Buffers, and Bubble Tea.
+- A playground for learning Go, SQL, and Bubble Tea.
 
 ## Highlights
 
 - TUI for starting and stopping timers, adding manual entries, and reviewing history.
-- Data stored as Protocol Buffers under `~/Dropbox/Samay` when available, or your local config directory otherwise.
+- Data stored in a single SQLite database (defaults to `~/Documents/Samay.db`, configurable on first launch).
 - Built-in monthly report and weekly overview views.
 
 ## Prerequisites
 
 - Go 1.23+ (the repo is configured with the Go 1.24.2 toolchain).
-- Optional: Dropbox desktop client with a valid `~/.dropbox/host.db` file so Samay can sync via `~/Dropbox/Samay`; otherwise data is stored under your user config directory (for example `~/.config/samay`).
-- Make sure there is no existing `~/Dropbox/Samay` directory that you care about before running the app; Samay will create and manage that directory.
+- SQLite is bundled; Samay uses the pure Go `modernc.org/sqlite` driver, so no external system packages are required.
 
 ## Installation
 
@@ -55,7 +54,9 @@ Launch the interface with:
 ./samay
 ```
 
-The TUI opens to a project list sourced from `~/Dropbox/Samay`. Use the arrow keys (or `j`/`k`) to highlight a project and from there:
+On the first launch Samay asks where to create the SQLite database (press Enter to accept the default `~/Documents/Samay.db`). Subsequent runs reuse the saved location.
+
+The TUI opens to a project list backed by that database. Use the arrow keys (or `j`/`k`) to highlight a project and from there:
 
 - `s` starts a timer. The project is persisted as soon as you start tracking against it.
 - `p` stops the active timer and prompts for a summary message.
@@ -68,7 +69,14 @@ At the project list level, press `r` to open the monthly report for the highligh
 
 ## Data Storage
 
-Samay keeps each project under a SHA1-named directory inside `~/Dropbox/Samay` (or whichever base path Samay resolves). Every project directory contains a `project.db` file and an `entries/` folder with per-entry protocol buffer records. Timers in progress live next to those entries as `timer.db`. Dropbox synchronizes your tracked time automatically across machines when you use its folder.
+Samay persists everything in a single SQLite database. The default location is `~/Documents/Samay.db`, but you can point it anywhere on disk. The schema tracks:
+
+- `projects`: project metadata plus timestamps and a hidden flag.
+- `entries`: individual time entries with nanosecond precision duration, start/stop timestamps, billable flag, and optional creator.
+- `entry_tags`: many-to-many join table for hashtag extraction.
+- `timers`: one active timer per project.
+
+The schema lives in `data/sql/schema.sql` and the sqlc query definitions are in `data/sql/queries.sql`.
 
 ## Development & Testing
 
@@ -78,10 +86,16 @@ Run the full test suite with:
 go test ./...
 ```
 
-Regenerate protocol buffer code after editing `data/models.proto` using `protoc --go_out=. data/models.proto` (requires `protoc` installed). Dependencies are managed through Go modules; see `go.mod` for the current set.
+If you change `data/sql/schema.sql` or `data/sql/queries.sql`, regenerate the typed data access layer with:
+
+```sh
+sqlc generate
+```
+
+Dependencies are managed through Go modules; see `go.mod` for the current set.
 
 ## Troubleshooting
 
-- Set `SAMAY_DATA_DIR` to override the storage directory. When Dropbox metadata is missing, Samay falls back to your user config directory so you can run tests and local builds without Dropbox installed.
-- If the interface launches with an empty project list, seed `~/Dropbox/Samay` with at least one project directory (containing a `project.db` file) before restarting. Project creation inside the TUI is on the roadmap.
+- The database location is stored in `$(os.UserConfigDir())/samay/config.json`. Delete that file to re-run the first-time setup prompt.
+- Because the SQLite driver is pure Go, the binary runs anywhere Go runs—no CGO or native SQLite is required.
 - Samay is provided without warranty—use at your own risk.

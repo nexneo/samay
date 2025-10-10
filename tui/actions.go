@@ -2,13 +2,11 @@ package tui
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/nexneo/samay/data"
-	"google.golang.org/protobuf/proto"
 )
 
 // RemoveEntryUI retains CLI `rm` entry deletion capability within the TUI.
@@ -36,7 +34,7 @@ func (a *app) RemoveEntryUI() {
 	}
 
 	entry.Project = a.project
-	if err := data.Destroy(entry); err != nil {
+	if err := entry.DeleteNow(); err != nil {
 		a.errorMessage = fmt.Sprintf("Error deleting entry: %v", err)
 		a.state = stateProjectMenu
 		return
@@ -67,7 +65,7 @@ func (a *app) RemoveProjectUI() {
 		return
 	}
 
-	if err := data.Destroy(project); err != nil {
+	if err := project.Delete(); err != nil {
 		a.errorMessage = fmt.Sprintf("Error deleting project: %v", err)
 		a.state = stateProjectMenu
 		return
@@ -102,22 +100,12 @@ func (a *app) MoveEntryUI() {
 
 	source := a.project
 	entry := a.selectedEntry
-
-	entry.Project = a.moveTargetProject
-	if err := data.Save(entry); err != nil {
-		a.errorMessage = fmt.Sprintf("Error saving entry in destination: %v", err)
+	if err := entry.MoveToProject(a.moveTargetProject); err != nil {
+		a.errorMessage = fmt.Sprintf("Error moving entry: %v", err)
 		entry.Project = source
 		return
 	}
 
-	entry.Project = source
-	if err := data.Destroy(entry); err != nil {
-		a.errorMessage = fmt.Sprintf("Entry moved but failed to remove from source: %v", err)
-		entry.Project = a.moveTargetProject
-		return
-	}
-
-	entry.Project = a.moveTargetProject
 	a.errorMessage = fmt.Sprintf("Entry moved to '%s'", a.moveTargetProject.GetName())
 	a.moveTargetProject = nil
 	a.selectedEntry = nil
@@ -157,21 +145,9 @@ func (a *app) MoveProjectUI() {
 		}
 	}
 
-	oldPath := data.DB.ProjectDirPath(a.project)
-	oldName := a.project.GetName()
-
-	// Apply the new name so helper methods compute the new location.
-	a.project.Name = proto.String(newName)
-	newPath := data.DB.ProjectDirPath(a.project)
-	if err := os.Rename(oldPath, newPath); err != nil {
-		a.project.Name = proto.String(oldName)
-		a.errorMessage = fmt.Sprintf("Error renaming project directory: %v", err)
+	if err := a.project.Rename(newName); err != nil {
+		a.errorMessage = fmt.Sprintf("Error renaming project: %v", err)
 		return
-	}
-
-	a.project.Sha = proto.String(a.project.GetShaFromName())
-	if err := data.Update(a.project); err != nil {
-		a.errorMessage = fmt.Sprintf("Error persisting project rename: %v", err)
 	}
 
 	a.renameInput.Blur()
