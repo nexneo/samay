@@ -82,6 +82,45 @@ func (a *app) RemoveProjectUI() {
 	a.confirmMessage = ""
 }
 
+// CreateProjectUI adds a new project from the TUI.
+func (a *app) CreateProjectUI() {
+	name := strings.TrimSpace(a.createInput.Value())
+	if name == "" {
+		a.errorMessage = "Project name cannot be empty."
+		return
+	}
+
+	for _, p := range data.DB.Projects() {
+		if strings.EqualFold(p.GetName(), name) {
+			a.errorMessage = "A project with that name already exists."
+			return
+		}
+	}
+
+	project, err := data.DB.CreateProject(name)
+	if err != nil {
+		a.errorMessage = fmt.Sprintf("Error creating project: %v", err)
+		return
+	}
+
+	a.createInput.Blur()
+	a.createInput.SetValue("")
+	a.refreshProjectList()
+
+	// Attempt to focus the newly created project in the list.
+	items := a.projects.Items()
+	for idx, listItem := range items {
+		if projectItem, ok := listItem.(item); ok && string(projectItem) == project.Name {
+			a.projects.Select(idx)
+			break
+		}
+	}
+	a.updateProjectSelectionFromList()
+	a.previousState = stateProjectMenu
+	a.state = stateProjectMenu
+	a.errorMessage = fmt.Sprintf("Project '%s' created", project.Name)
+}
+
 // MoveEntryUI retains CLI entry move capability within the TUI.
 func (a *app) MoveEntryUI() {
 	if a.project == nil {

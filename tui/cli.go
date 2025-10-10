@@ -46,6 +46,7 @@ type state int
 const (
 	stateProjectList     state = iota // Showing the list of projects
 	stateProjectMenu                  // Showing the menu for a selected project
+	stateCreateProject                // Creating a new project
 	stateStoppingTimer                // Asking for a message before stopping timer
 	stateManualEntry                  // Asking for time and message for manual entry
 	stateShowLogs                     // Displaying project logs
@@ -108,6 +109,7 @@ type app struct {
 	moveTargetProject *data.Project
 	moveProjects      list.Model
 	renameInput       textinput.Model
+	createInput       textinput.Model
 	reportMonth       time.Month
 	reportYear        int
 	logShowAll        bool
@@ -167,6 +169,11 @@ func CreateApp() *app {
 	renameTI.CharLimit = 120
 	renameTI.Width = 50
 
+	createTI := textinput.New()
+	createTI.Placeholder = "Enter project name"
+	createTI.CharLimit = 120
+	createTI.Width = 50
+
 	// Viewport for logs
 	vp := viewport.New(defaultWidth, 20) // Initial size, will be updated
 	vp.Style = lipgloss.NewStyle().MarginLeft(2)
@@ -207,6 +214,7 @@ func CreateApp() *app {
 			{"R", "Rename project"},
 		},
 		renameInput:   renameTI,
+		createInput:   createTI,
 		reportMonth:   time.Now().Month(),
 		reportYear:    time.Now().Year(),
 		previousState: initialState,
@@ -284,6 +292,9 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateProjectMenu:
 			m, c := a.handleKeypressProjectMenu(msg)
 			return m, c
+		case stateCreateProject:
+			m, c := a.handleKeypressCreateProject(msg)
+			return m, c
 		case stateStoppingTimer:
 			m, c := a.handleKeypressStoppingTimer(msg)
 			return m, c
@@ -318,6 +329,9 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch a.state {
 	case stateProjectList:
 		a.projects, cmd = a.projects.Update(msg)
+		cmds = append(cmds, cmd)
+	case stateCreateProject:
+		a.createInput, cmd = a.createInput.Update(msg)
 		cmds = append(cmds, cmd)
 	case stateStoppingTimer:
 		if a.stopEntryFocus == focusStopMessage {
@@ -549,12 +563,44 @@ func (a *app) handleKeypressRenameProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, cmd
 }
 
+func (a *app) handleKeypressCreateProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch keypress := msg.String(); keypress {
+	case "ctrl+c", "q":
+		return a, tea.Quit
+	case "esc":
+		a.createInput.Blur()
+		target := a.previousState
+		if target != stateProjectMenu && target != stateProjectList {
+			target = stateProjectList
+		}
+		a.state = target
+		a.updateProjectSelectionFromList()
+		return a, nil
+	case "enter":
+		a.CreateProjectUI()
+		return a, nil
+	}
+
+	var cmd tea.Cmd
+	a.createInput, cmd = a.createInput.Update(msg)
+	return a, cmd
+}
+
 func (a app) View() string {
 	var viewContent string
 
 	switch a.state {
 	case stateProjectList, stateProjectMenu:
 		viewContent = a.projectSelectionView()
+
+	case stateCreateProject:
+		var lines []string
+		lines = append(lines, titleStyle.MarginTop(1).Render("Create a new project"))
+		lines = append(lines, "")
+		lines = append(lines, inputPromptStyle.Render(a.createInput.View()))
+		lines = append(lines, "")
+		lines = append(lines, helpStyle.Render("enter: create | esc: cancel | ctrl+c: quit"))
+		viewContent = lipgloss.JoinVertical(lipgloss.Left, lines...)
 
 	case stateStoppingTimer:
 		var lines []string

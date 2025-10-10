@@ -112,7 +112,7 @@ func (a app) projectColumnWidths(totalWidth int) (int, int) {
 }
 
 func (a app) projectFooterView() string {
-	baseControls := []string{"↑/↓: navigate", "r: monthly report (list)", "o: weekly overview", "q: quit"}
+	baseControls := []string{"↑/↓: navigate", "n: new project", "r: monthly report (list)", "o: weekly overview", "q: quit"}
 	return helpStyle.Render(strings.Join(baseControls, " | "))
 }
 
@@ -121,7 +121,12 @@ func (a app) projectActionsView(width int) string {
 		width = 40
 	}
 	if a.project == nil {
-		lines := []string{titleStyle.Render("Project actions"), "", projectActionStyle.Render("Select a project to see available actions.")}
+		lines := []string{
+			titleStyle.Render("Project actions"),
+			"",
+			projectActionStyle.Render("Select a project to see available actions."),
+			projectActionStyle.Render("Press 'n' to create a new project."),
+		}
 		return lipgloss.NewStyle().Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 	}
 
@@ -230,6 +235,12 @@ func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
+	case "n":
+		a.previousState = a.state
+		a.createInput.SetValue("")
+		a.createInput.Focus()
+		a.state = stateCreateProject
+		return a, textinput.Blink
 	case "r":
 		a.ReportViewUI()
 		return a, nil
@@ -261,6 +272,12 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.project = nil
 		a.state = stateProjectList
 		return a, nil
+	case "n":
+		a.previousState = a.state
+		a.createInput.SetValue("")
+		a.createInput.Focus()
+		a.state = stateCreateProject
+		return a, textinput.Blink
 	case "r":
 		a.ReportViewUI()
 		return a, nil
