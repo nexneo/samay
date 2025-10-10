@@ -3,7 +3,7 @@ package version
 import "fmt"
 
 // Number represents the semantic version of the CLI.
-const Number = "1.1.1"
+const Number = "2.0.1"
 
 // Name is the human-friendly identifier used when printing the version string.
 const Name = "samay"
