@@ -9,6 +9,11 @@ import (
 
 // when asking for stop message
 func (a *app) handleKeypressStoppingTimer(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if msg.Type == tea.KeySpace && a.stopEntryFocus == focusStopBillable {
+		a.stopBillable = !a.stopBillable
+		return a, textinput.Blink
+	}
+
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c":
 		return a, tea.Quit
@@ -28,10 +33,6 @@ func (a *app) handleKeypressStoppingTimer(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			a.stopBillable = true
 			a.stopEntryFocus = focusStopMessage
 			return a, tea.ClearScreen
-		}
-		if keypress == "enter" && a.stopEntryFocus == focusStopBillable {
-			a.stopBillable = !a.stopBillable
-			return a, textinput.Blink
 		}
 
 		var delta int

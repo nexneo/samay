@@ -568,14 +568,14 @@ func (a app) View() string {
 		if !a.stopBillable {
 			stopBillableLabel = "No"
 		}
-		stopBillableText := fmt.Sprintf("Billable: %s (enter to toggle)", stopBillableLabel)
+		stopBillableText := fmt.Sprintf("Billable: %s (space to toggle)", stopBillableLabel)
 		stopBillableStyle := itemStyle
 		if a.stopEntryFocus == focusStopBillable {
 			stopBillableStyle = stopBillableStyle.Foreground(lipgloss.Color("170")).Bold(true)
 		}
 		lines = append(lines, stopBillableStyle.Render(stopBillableText))
 		lines = append(lines, "")
-		helpText := helpStyle.Render("enter: submit/toggle | tab/↑/↓: switch field | esc: cancel | ctrl+c: quit")
+		helpText := helpStyle.Render("enter: submit | tab/↑/↓: switch field | esc: cancel | ctrl+c: quit")
 		lines = append(lines, helpText)
 		viewContent = lipgloss.JoinVertical(lipgloss.Left, lines...)
 
@@ -594,14 +594,14 @@ func (a app) View() string {
 		if !a.manualBillable {
 			manualBillableLabel = "No"
 		}
-		manualBillableText := fmt.Sprintf("Billable: %s (enter to toggle)", manualBillableLabel)
+		manualBillableText := fmt.Sprintf("Billable: %s (space to toggle)", manualBillableLabel)
 		manualBillableStyle := itemStyle
 		if a.manualEntryFocus == focusBillable {
 			manualBillableStyle = manualBillableStyle.Foreground(lipgloss.Color("170")).Bold(true)
 		}
 		lines = append(lines, manualBillableStyle.Render(manualBillableText))
 		lines = append(lines, "")
-		helpText := helpStyle.Render("enter: next/submit/toggle | tab/↑/↓: switch | esc: cancel | ctrl+c: quit")
+		helpText := helpStyle.Render("enter: submit | tab/↑/↓: switch | esc: cancel | ctrl+c: quit")
 		lines = append(lines, helpText)
 		viewContent = lipgloss.JoinVertical(lipgloss.Left, lines...)
 

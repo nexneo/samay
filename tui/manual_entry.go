@@ -13,6 +13,11 @@ import (
 func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
+	if msg.Type == tea.KeySpace && a.manualEntryFocus == focusBillable {
+		a.manualBillable = !a.manualBillable
+		return a, textinput.Blink
+	}
+
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c":
 		return a, tea.Quit
@@ -23,62 +28,58 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.manualEntryFocus = focusTime
 		a.manualBillable = true
 		return a, nil
-	case "enter", "tab", "shift+tab", "up", "down":
-		const manualFocusCount = 3
-		if keypress == "enter" && a.manualEntryFocus == focusMessage {
-			durationStr := a.manualTimeInput.Value()
-			message := a.manualMsgInput.Value()
+	case "enter":
+		durationStr := a.manualTimeInput.Value()
+		message := a.manualMsgInput.Value()
 
-			if durationStr == "" {
-				a.errorMessage = "Error: Duration cannot be empty."
-				a.manualEntryFocus = focusTime
-				a.manualTimeInput.Focus()
-				a.manualMsgInput.Blur()
-				return a, textinput.Blink
-			}
-			if message == "" {
-				a.errorMessage = "Error: Message cannot be empty."
-				return a, textinput.Blink
-			}
-
-			duration, err := time.ParseDuration(durationStr)
-			if err != nil {
-				a.errorMessage = fmt.Sprintf("Error parsing duration: %v", err)
-				a.manualEntryFocus = focusTime
-				a.manualTimeInput.Focus()
-				a.manualMsgInput.Blur()
-				return a, textinput.Blink
-			}
-
-			if a.project == nil {
-				a.errorMessage = "Error: No project selected (internal error)."
-				a.state = stateProjectList
-				return a, nil
-			}
-
-			entry := a.project.CreateEntryWithDuration(message, duration, a.manualBillable)
-			err = data.Save(entry)
-			if err != nil {
-				a.errorMessage = fmt.Sprintf("Error saving entry: %v", err)
-				return a, nil
-			}
-
-			a.state = stateProjectMenu
-			a.manualTimeInput.Blur()
-			a.manualMsgInput.Blur()
+		if durationStr == "" {
+			a.errorMessage = "Error: Duration cannot be empty."
 			a.manualEntryFocus = focusTime
-			a.manualBillable = true
-			return a, nil
-		}
-
-		if keypress == "enter" && a.manualEntryFocus == focusBillable {
-			a.manualBillable = !a.manualBillable
+			a.manualTimeInput.Focus()
+			a.manualMsgInput.Blur()
 			return a, textinput.Blink
 		}
 
+		duration, err := time.ParseDuration(durationStr)
+		if err != nil {
+			a.errorMessage = fmt.Sprintf("Error parsing duration: %v", err)
+			a.manualEntryFocus = focusTime
+			a.manualTimeInput.Focus()
+			a.manualMsgInput.Blur()
+			return a, textinput.Blink
+		}
+
+		if message == "" {
+			a.errorMessage = "Error: Message cannot be empty."
+			a.manualEntryFocus = focusMessage
+			a.manualTimeInput.Blur()
+			a.manualMsgInput.Focus()
+			return a, textinput.Blink
+		}
+
+		if a.project == nil {
+			a.errorMessage = "Error: No project selected (internal error)."
+			a.state = stateProjectList
+			return a, nil
+		}
+
+		entry := a.project.CreateEntryWithDuration(message, duration, a.manualBillable)
+		if err = data.Save(entry); err != nil {
+			a.errorMessage = fmt.Sprintf("Error saving entry: %v", err)
+			return a, nil
+		}
+
+		a.state = stateProjectMenu
+		a.manualTimeInput.Blur()
+		a.manualMsgInput.Blur()
+		a.manualEntryFocus = focusTime
+		a.manualBillable = true
+		return a, nil
+	case "tab", "shift+tab", "up", "down":
+		const manualFocusCount = 3
 		var delta int
 		switch keypress {
-		case "tab", "enter", "down":
+		case "tab", "down":
 			delta = 1
 		case "shift+tab", "up":
 			delta = -1
