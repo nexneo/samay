@@ -470,7 +470,8 @@ SELECT id,
        created_at,
        updated_at
 FROM projects
-ORDER BY name COLLATE NOCASE
+ORDER BY updated_at DESC,
+         name COLLATE NOCASE
 `
 
 // Projects
@@ -551,7 +552,8 @@ SELECT id,
        updated_at
 FROM projects
 WHERE is_hidden = 0
-ORDER BY name COLLATE NOCASE
+ORDER BY updated_at DESC,
+         name COLLATE NOCASE
 `
 
 func (q *Queries) ListVisibleProjects(ctx context.Context) ([]Project, error) {
@@ -612,6 +614,17 @@ func (q *Queries) ProjectTotalsInRange(ctx context.Context, arg ProjectTotalsInR
 	var i ProjectTotalsInRangeRow
 	err := row.Scan(&i.TotalDurationMs, &i.BillableDurationMs, &i.EntryCount)
 	return i, err
+}
+
+const TouchProject = `-- name: TouchProject :exec
+UPDATE projects
+SET updated_at = unixepoch()
+WHERE id = ?1
+`
+
+func (q *Queries) TouchProject(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, TouchProject, id)
+	return err
 }
 
 const UpdateEntry = `-- name: UpdateEntry :one

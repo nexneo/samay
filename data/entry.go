@@ -184,6 +184,9 @@ func (e *Entry) Save(ctx context.Context) error {
 	if err := e.replaceTags(ctx); err != nil {
 		return err
 	}
+	if err := e.db.queries.TouchProject(ctx, e.ProjectID); err != nil {
+		return fmt.Errorf("touch project: %w", err)
+	}
 	return nil
 }
 
@@ -235,6 +238,9 @@ func (e *Entry) Update(ctx context.Context) error {
 	e.UpdatedAt = time.Unix(record.UpdatedAt, 0).UTC()
 	if err := e.replaceTags(ctx); err != nil {
 		return err
+	}
+	if err := e.db.queries.TouchProject(ctx, e.ProjectID); err != nil {
+		return fmt.Errorf("touch project: %w", err)
 	}
 	return nil
 }

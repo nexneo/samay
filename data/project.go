@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -276,9 +275,6 @@ func (d *Database) Projects() []*Project {
 	for _, row := range rows {
 		projects = append(projects, newProjectFromModel(d, row))
 	}
-	sort.Slice(projects, func(i, j int) bool {
-		return strings.ToLower(projects[i].Name) < strings.ToLower(projects[j].Name)
-	})
 	return projects
 }
 
