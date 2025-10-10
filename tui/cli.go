@@ -585,17 +585,18 @@ func (a app) View() string {
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render("Duration (e.g., 1h30m):"))
-		lines = append(lines, itemStyle.Render(a.manualTimeInput.View()))
+		fieldStyle := itemStyle.PaddingLeft(2)
+		lines = append(lines, fieldStyle.Render(a.manualTimeInput.View()))
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render("Message:"))
-		lines = append(lines, itemStyle.Render(a.manualMsgInput.View()))
+		lines = append(lines, fieldStyle.Render(a.manualMsgInput.View()))
 		lines = append(lines, "")
 		manualBillableLabel := "Yes"
 		if !a.manualBillable {
 			manualBillableLabel = "No"
 		}
 		manualBillableText := fmt.Sprintf("Billable: %s (space to toggle)", manualBillableLabel)
-		manualBillableStyle := itemStyle
+		manualBillableStyle := fieldStyle
 		if a.manualEntryFocus == focusBillable {
 			manualBillableStyle = manualBillableStyle.Foreground(lipgloss.Color("170")).Bold(true)
 		}
