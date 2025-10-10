@@ -11,6 +11,8 @@ Stick to idiomatic Go style: tabs for indentation, `gofmt` and `goimports` keep 
 
 When deferring cleanup (for example, closing files or database handles), make sure to check and propagate errors returned by the deferred call so `errcheck` and similar linters stay satisfied.
 
+golangci-lint runs automatically in CI; you don’t need to invoke it locally unless you’re debugging a failing check.
+
 ## Testing Guidelines
 Write tests alongside the code under test using Go's `testing` package. Name suites with `*_test.go` and individual cases with `TestScenarioName`. Exercise persistence flows through the SQLite-backed data layer and state transitions in `tui/`. Before opening a pull request, run `go test ./...` (or `go test -run <Package> ./...` for focused work) to ensure a clean signal.
 

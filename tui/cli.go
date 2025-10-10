@@ -437,11 +437,11 @@ func (a *app) entryDetailView(entry *data.Entry) string {
 
 	startedStr := "—"
 	if started != nil && !started.IsZero() {
-		startedStr = started.Format("Jan 02 2006 15:04")
+		startedStr = started.In(time.Local).Format("Jan 02 2006 15:04")
 	}
 	endedStr := "—"
 	if ended != nil && !ended.IsZero() {
-		endedStr = ended.Format("Jan 02 2006 15:04")
+		endedStr = ended.In(time.Local).Format("Jan 02 2006 15:04")
 	}
 	billableStr := "No"
 	if entry.GetBillable() {
