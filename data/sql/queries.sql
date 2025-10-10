@@ -69,12 +69,6 @@ RETURNING id,
 DELETE FROM projects
 WHERE id = ?1;
 
-SELECT EXISTS (
-    SELECT 1
-    FROM projects
-    WHERE name = ?1 COLLATE NOCASE
-) AS project_exists;
-
 
 -- People
 

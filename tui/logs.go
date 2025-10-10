@@ -126,6 +126,10 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 			continue // Skip this entry
 		}
 
+		if ty == nil {
+			continue
+		}
+
 		// Check if the day has changed
 		currentDayKey := ty.Year()*1000 + ty.YearDay()
 		if dayKey != currentDayKey {
