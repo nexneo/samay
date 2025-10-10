@@ -29,7 +29,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "open database: %v\n", err)
 		os.Exit(1)
 	}
-	defer data.DB.Close()
+	defer func() {
+		if data.DB == nil {
+			return
+		}
+		if err := data.DB.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "close database: %v\n", err)
+		}
+	}()
 
 	p := tea.NewProgram(tui.CreateApp())
 	if _, err := p.Run(); err != nil {

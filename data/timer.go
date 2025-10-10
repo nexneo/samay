@@ -50,7 +50,3 @@ func (t *Timer) Duration() time.Duration {
 	}
 	return time.Since(start)
 }
-
-func (t *Timer) hoursMins() hoursMins {
-	return hoursMinsFromDuration(t.Duration())
-}

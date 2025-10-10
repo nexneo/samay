@@ -55,7 +55,9 @@ func open(path string) (*Database, error) {
 	}
 
 	if err := configureSQLite(sqlite); err != nil {
-		sqlite.Close()
+		if closeErr := sqlite.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close sqlite: %w", closeErr))
+		}
 		return nil, err
 	}
 
@@ -66,7 +68,9 @@ func open(path string) (*Database, error) {
 	}
 
 	if err := db.ensureSchema(context.Background()); err != nil {
-		sqlite.Close()
+		if closeErr := sqlite.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close sqlite: %w", closeErr))
+		}
 		return nil, err
 	}
 

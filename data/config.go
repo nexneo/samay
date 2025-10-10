@@ -82,26 +82,33 @@ func defaultDatabasePath() (string, error) {
 	return filepath.Join(documents, defaultDBName), nil
 }
 
-func readConfig(path string) (config, error) {
+func readConfig(path string) (cfg config, err error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return config{}, err
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close config file: %w", closeErr))
+		}
+	}()
 
-	var cfg config
 	if err := json.NewDecoder(f).Decode(&cfg); err != nil && !errors.Is(err, io.EOF) {
 		return config{}, fmt.Errorf("decode config: %w", err)
 	}
 	return cfg, nil
 }
 
-func writeConfig(path string, cfg config) error {
+func writeConfig(path string, cfg config) (err error) {
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("create config: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close config file: %w", closeErr))
+		}
+	}()
 
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "  ")
