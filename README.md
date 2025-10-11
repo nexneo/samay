@@ -12,7 +12,7 @@ Samay is a Go application that lets you track work entirely from the terminal. I
 
 - Frustration with existing time trackers, slow, complex.
 - The terminal is always open.
-- A playground for learning Go, SQL, and Bubble Tea.
+- A playground for learning Go, [sqlc](https://sqlc.dev/), and Bubble Tea.
 
 ## Highlights
 
@@ -55,6 +55,8 @@ Launch the interface with:
 ```
 
 On the first launch Samay asks where to create the SQLite database (press Enter to accept the default `~/Documents/Samay.db`). Subsequent runs reuse the saved location.
+
+Use `./samay -database /path/to/custom.db` to point at a different database for a single run—handy for testing or migrating data. When you quit, Samay prints the path to the database that backed the session so you always know where entries were written.
 
 The TUI opens to a project list backed by that database. Use the arrow keys (or `j`/`k`) to highlight a project and from there:
 
