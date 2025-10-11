@@ -13,6 +13,7 @@ import (
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the samay version and exit")
+	dbOverride := flag.String("database", "", "override the database location for this run")
 	flag.Parse()
 
 	if *showVersion {
@@ -20,7 +21,7 @@ func main() {
 		return
 	}
 
-	dbPath, err := data.ResolveDatabasePath()
+	dbPath, err := data.ResolveDatabasePathWithOverride(*dbOverride)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "resolve database path: %v\n", err)
 		os.Exit(1)
@@ -42,5 +43,9 @@ func main() {
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Alas, there's been an error: %v\n", err)
 		os.Exit(1)
+	}
+
+	if data.DB != nil && data.DB.Path() != "" {
+		fmt.Printf("Database located at: %s\n", data.DB.Path())
 	}
 }

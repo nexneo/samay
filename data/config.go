@@ -20,6 +20,22 @@ type config struct {
 	DatabasePath string `json:"database_path"`
 }
 
+// ResolveDatabasePathWithOverride returns the provided override path when set,
+// falling back to the persisted configuration or interactive prompt.
+func ResolveDatabasePathWithOverride(override string) (string, error) {
+	if strings.TrimSpace(override) != "" {
+		path, err := expandPath(override)
+		if err != nil {
+			return "", err
+		}
+		if err := ensureParentDirectory(path); err != nil {
+			return "", err
+		}
+		return path, nil
+	}
+	return ResolveDatabasePath()
+}
+
 // ResolveDatabasePath returns the persisted database location or prompts the user
 // to choose one when Samay runs for the first time.
 func ResolveDatabasePath() (string, error) {
