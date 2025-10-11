@@ -120,8 +120,8 @@ func (e *Entry) Minutes() float64 {
 	return time.Duration(e.GetDuration()).Minutes()
 }
 
-func (e *Entry) HoursMins() hoursMins {
-	return hoursMinsFromDuration(time.Duration(e.GetDuration()))
+func (e *Entry) HoursMins() util.HoursMins {
+	return util.HoursMinsFromDuration(time.Duration(e.GetDuration()))
 }
 
 func (e *Entry) Save(ctx context.Context) error {

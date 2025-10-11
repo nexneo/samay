@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/nexneo/samay/data"
+	"github.com/nexneo/samay/util"
 )
 
 // RemoveEntryUI retains CLI `rm` entry deletion capability within the TUI.
@@ -262,11 +263,11 @@ func (a *app) ReportViewUI() {
 	sb.WriteString("\n")
 
 	for _, row := range rows {
-		total := data.HmFromD(row.total).String()
-		billable := data.HmFromD(row.billable).String()
+		total := util.HmFromD(row.total).String()
+		billable := util.HmFromD(row.billable).String()
 		onClock := ""
 		if row.isOnClock {
-			onClock = fmt.Sprintf("running (%s)", data.HmFromD(row.clockAmount))
+			onClock = fmt.Sprintf("running (%s)", util.HmFromD(row.clockAmount))
 		}
 		line := fmt.Sprintf("%-28s %10s %10s %8d %s", row.name, total, billable, row.entries, onClock)
 		sb.WriteString(detailRowStyle.Render(line))
@@ -274,9 +275,9 @@ func (a *app) ReportViewUI() {
 	}
 
 	sb.WriteString("\n")
-	sb.WriteString(detailLine("Tracked:", data.HmFromD(overall).String()))
+	sb.WriteString(detailLine("Tracked:", util.HmFromD(overall).String()))
 	sb.WriteString("\n")
-	sb.WriteString(detailLine("Billable:", data.HmFromD(overallBillable).String()))
+	sb.WriteString(detailLine("Billable:", util.HmFromD(overallBillable).String()))
 	sb.WriteString("\n")
 
 	a.reportViewport.SetContent(sb.String())
@@ -377,13 +378,13 @@ func (a *app) WebReplacementUI() {
 		}
 		activity := ""
 		if row.onClock {
-			activity = fmt.Sprintf("running %s", data.HmFromD(row.clock))
+			activity = fmt.Sprintf("running %s", util.HmFromD(row.clock))
 		}
 		line := fmt.Sprintf("%-20s %-8s %-8s %-8s %s %s",
 			row.name,
-			data.HmFromD(row.week),
-			data.HmFromD(row.month),
-			data.HmFromD(row.billable),
+			util.HmFromD(row.week),
+			util.HmFromD(row.month),
+			util.HmFromD(row.billable),
 			activity,
 			bar,
 		)

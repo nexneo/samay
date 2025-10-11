@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nexneo/samay/data"
+	"github.com/nexneo/samay/util"
 )
 
 type entryItem struct {
@@ -35,7 +36,7 @@ func (d entryItemDelegate) Render(w io.Writer, m list.Model, index int, listItem
 	}
 
 	entry := it.entry
-	hm := data.HmFromD(time.Duration(entry.GetDuration()))
+	hm := util.HmFromD(time.Duration(entry.GetDuration()))
 
 	desc := strings.TrimSpace(strings.ReplaceAll(entry.GetContent(), "\n", " "))
 	if len(desc) == 0 {

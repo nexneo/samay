@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nexneo/samay/data"
+	"github.com/nexneo/samay/util"
 )
 
 // Helper view for log title
@@ -97,7 +98,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 		if totalDuration == 0 {
 			return
 		}
-		totalStr := data.HmFromD(totalDuration).String()
+		totalStr := util.HmFromD(totalDuration).String()
 		totalLine := fmt.Sprintf("%-*s%s%-*s%s%s",
 			indexColWidth,
 			"",
@@ -146,7 +147,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 		}
 		durationStr := "--:--"
 		if duration > 0 {
-			durationStr = data.HmFromD(duration).String()
+			durationStr = util.HmFromD(duration).String()
 		}
 
 		// Format description with rune-aware truncation

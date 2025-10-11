@@ -10,7 +10,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport" // Import viewport for scrolling logs
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/nexneo/samay/data" // Assuming util.Color exists and HmFromD
+	"github.com/nexneo/samay/data"
+	"github.com/nexneo/samay/util"
 	"github.com/samber/lo"
 )
 
@@ -433,7 +434,7 @@ func (a *app) entryDetailView(entry *data.Entry) string {
 
 	started, _ := entry.StartedTime()
 	ended, _ := entry.EndedTime()
-	duration := data.HmFromD(time.Duration(entry.GetDuration()))
+	duration := util.HmFromD(time.Duration(entry.GetDuration()))
 
 	startedStr := "—"
 	if started != nil && !started.IsZero() {
