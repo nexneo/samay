@@ -24,6 +24,8 @@ func (a *app) handleKeypressStoppingTimer(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			if a.project != nil {
 				if err := a.project.StopTimer(message, a.stopBillable); err != nil {
 					a.errorMessage = fmt.Sprintf("Error stopping timer: %v", err)
+				} else {
+					a.refreshEntryList()
 				}
 			}
 			a.state = stateProjectMenu

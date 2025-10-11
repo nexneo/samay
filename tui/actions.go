@@ -2,13 +2,11 @@ package tui
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/nexneo/samay/data"
-	"google.golang.org/protobuf/proto"
 )
 
 // RemoveEntryUI retains CLI `rm` entry deletion capability within the TUI.
@@ -36,7 +34,7 @@ func (a *app) RemoveEntryUI() {
 	}
 
 	entry.Project = a.project
-	if err := data.Destroy(entry); err != nil {
+	if err := entry.DeleteNow(); err != nil {
 		a.errorMessage = fmt.Sprintf("Error deleting entry: %v", err)
 		a.state = stateProjectMenu
 		return
@@ -67,7 +65,7 @@ func (a *app) RemoveProjectUI() {
 		return
 	}
 
-	if err := data.Destroy(project); err != nil {
+	if err := project.Delete(); err != nil {
 		a.errorMessage = fmt.Sprintf("Error deleting project: %v", err)
 		a.state = stateProjectMenu
 		return
@@ -82,6 +80,45 @@ func (a *app) RemoveProjectUI() {
 	a.confirmProject = nil
 	a.confirmAction = confirmNone
 	a.confirmMessage = ""
+}
+
+// CreateProjectUI adds a new project from the TUI.
+func (a *app) CreateProjectUI() {
+	name := strings.TrimSpace(a.createInput.Value())
+	if name == "" {
+		a.errorMessage = "Project name cannot be empty."
+		return
+	}
+
+	for _, p := range data.DB.Projects() {
+		if strings.EqualFold(p.GetName(), name) {
+			a.errorMessage = "A project with that name already exists."
+			return
+		}
+	}
+
+	project, err := data.DB.CreateProject(name)
+	if err != nil {
+		a.errorMessage = fmt.Sprintf("Error creating project: %v", err)
+		return
+	}
+
+	a.createInput.Blur()
+	a.createInput.SetValue("")
+	a.refreshProjectList()
+
+	// Attempt to focus the newly created project in the list.
+	items := a.projects.Items()
+	for idx, listItem := range items {
+		if projectItem, ok := listItem.(item); ok && string(projectItem) == project.Name {
+			a.projects.Select(idx)
+			break
+		}
+	}
+	a.updateProjectSelectionFromList()
+	a.previousState = stateProjectMenu
+	a.state = stateProjectMenu
+	a.errorMessage = fmt.Sprintf("Project '%s' created", project.Name)
 }
 
 // MoveEntryUI retains CLI entry move capability within the TUI.
@@ -102,22 +139,12 @@ func (a *app) MoveEntryUI() {
 
 	source := a.project
 	entry := a.selectedEntry
-
-	entry.Project = a.moveTargetProject
-	if err := data.Save(entry); err != nil {
-		a.errorMessage = fmt.Sprintf("Error saving entry in destination: %v", err)
+	if err := entry.MoveToProject(a.moveTargetProject); err != nil {
+		a.errorMessage = fmt.Sprintf("Error moving entry: %v", err)
 		entry.Project = source
 		return
 	}
 
-	entry.Project = source
-	if err := data.Destroy(entry); err != nil {
-		a.errorMessage = fmt.Sprintf("Entry moved but failed to remove from source: %v", err)
-		entry.Project = a.moveTargetProject
-		return
-	}
-
-	entry.Project = a.moveTargetProject
 	a.errorMessage = fmt.Sprintf("Entry moved to '%s'", a.moveTargetProject.GetName())
 	a.moveTargetProject = nil
 	a.selectedEntry = nil
@@ -157,21 +184,9 @@ func (a *app) MoveProjectUI() {
 		}
 	}
 
-	oldPath := data.DB.ProjectDirPath(a.project)
-	oldName := a.project.GetName()
-
-	// Apply the new name so helper methods compute the new location.
-	a.project.Name = proto.String(newName)
-	newPath := data.DB.ProjectDirPath(a.project)
-	if err := os.Rename(oldPath, newPath); err != nil {
-		a.project.Name = proto.String(oldName)
-		a.errorMessage = fmt.Sprintf("Error renaming project directory: %v", err)
+	if err := a.project.Rename(newName); err != nil {
+		a.errorMessage = fmt.Sprintf("Error renaming project: %v", err)
 		return
-	}
-
-	a.project.Sha = proto.String(a.project.GetShaFromName())
-	if err := data.Update(a.project); err != nil {
-		a.errorMessage = fmt.Sprintf("Error persisting project rename: %v", err)
 	}
 
 	a.renameInput.Blur()

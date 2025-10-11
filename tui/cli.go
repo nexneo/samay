@@ -46,6 +46,7 @@ type state int
 const (
 	stateProjectList     state = iota // Showing the list of projects
 	stateProjectMenu                  // Showing the menu for a selected project
+	stateCreateProject                // Creating a new project
 	stateStoppingTimer                // Asking for a message before stopping timer
 	stateManualEntry                  // Asking for time and message for manual entry
 	stateShowLogs                     // Displaying project logs
@@ -108,6 +109,7 @@ type app struct {
 	moveTargetProject *data.Project
 	moveProjects      list.Model
 	renameInput       textinput.Model
+	createInput       textinput.Model
 	reportMonth       time.Month
 	reportYear        int
 	logShowAll        bool
@@ -121,8 +123,7 @@ func CreateApp() *app {
 		currentProject = projects[0]
 	}
 	items := lo.Map(projects, func(p *data.Project, _ int) list.Item {
-		name := *p.Name
-		return item(name)
+		return item(p.Name)
 	})
 	const defaultWidth = 20
 	listHeight := len(items)*2 + 5 // Adjust height based on items
@@ -168,6 +169,11 @@ func CreateApp() *app {
 	renameTI.CharLimit = 120
 	renameTI.Width = 50
 
+	createTI := textinput.New()
+	createTI.Placeholder = "Enter project name"
+	createTI.CharLimit = 120
+	createTI.Width = 50
+
 	// Viewport for logs
 	vp := viewport.New(defaultWidth, 20) // Initial size, will be updated
 	vp.Style = lipgloss.NewStyle().MarginLeft(2)
@@ -208,6 +214,7 @@ func CreateApp() *app {
 			{"R", "Rename project"},
 		},
 		renameInput:   renameTI,
+		createInput:   createTI,
 		reportMonth:   time.Now().Month(),
 		reportYear:    time.Now().Year(),
 		previousState: initialState,
@@ -285,6 +292,9 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateProjectMenu:
 			m, c := a.handleKeypressProjectMenu(msg)
 			return m, c
+		case stateCreateProject:
+			m, c := a.handleKeypressCreateProject(msg)
+			return m, c
 		case stateStoppingTimer:
 			m, c := a.handleKeypressStoppingTimer(msg)
 			return m, c
@@ -319,6 +329,9 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch a.state {
 	case stateProjectList:
 		a.projects, cmd = a.projects.Update(msg)
+		cmds = append(cmds, cmd)
+	case stateCreateProject:
+		a.createInput, cmd = a.createInput.Update(msg)
 		cmds = append(cmds, cmd)
 	case stateStoppingTimer:
 		if a.stopEntryFocus == focusStopMessage {
@@ -424,11 +437,11 @@ func (a *app) entryDetailView(entry *data.Entry) string {
 
 	startedStr := "—"
 	if started != nil && !started.IsZero() {
-		startedStr = started.Format("Jan 02 2006 15:04")
+		startedStr = started.In(time.Local).Format("Jan 02 2006 15:04")
 	}
 	endedStr := "—"
 	if ended != nil && !ended.IsZero() {
-		endedStr = ended.Format("Jan 02 2006 15:04")
+		endedStr = ended.In(time.Local).Format("Jan 02 2006 15:04")
 	}
 	billableStr := "No"
 	if entry.GetBillable() {
@@ -454,7 +467,7 @@ func (a *app) entryDetailView(entry *data.Entry) string {
 
 	lines = append(lines, "")
 	lines = append(lines, detailSectionStyle.Render("Description"))
-	for line := range strings.SplitSeq(desc, "\n") {
+	for _, line := range strings.Split(desc, "\n") {
 		lines = append(lines, detailValueStyle.PaddingLeft(2).Render(line))
 	}
 
@@ -500,7 +513,7 @@ func (a *app) handleKeypressMoveEntryTarget(msg tea.KeyMsg) (tea.Model, tea.Cmd)
 		selected := a.moveProjects.SelectedItem()
 		if projectItem, ok := selected.(item); ok {
 			projects := lo.Filter(data.DB.Projects(), func(p *data.Project, _ int) bool {
-				return *p.Name == string(projectItem)
+				return p.Name == string(projectItem)
 			})
 			if len(projects) > 0 {
 				a.moveTargetProject = projects[0]
@@ -550,6 +563,29 @@ func (a *app) handleKeypressRenameProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, cmd
 }
 
+func (a *app) handleKeypressCreateProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch keypress := msg.String(); keypress {
+	case "ctrl+c", "q":
+		return a, tea.Quit
+	case "esc":
+		a.createInput.Blur()
+		target := a.previousState
+		if target != stateProjectMenu && target != stateProjectList {
+			target = stateProjectList
+		}
+		a.state = target
+		a.updateProjectSelectionFromList()
+		return a, nil
+	case "enter":
+		a.CreateProjectUI()
+		return a, nil
+	}
+
+	var cmd tea.Cmd
+	a.createInput, cmd = a.createInput.Update(msg)
+	return a, cmd
+}
+
 func (a app) View() string {
 	var viewContent string
 
@@ -557,9 +593,22 @@ func (a app) View() string {
 	case stateProjectList, stateProjectMenu:
 		viewContent = a.projectSelectionView()
 
+	case stateCreateProject:
+		var lines []string
+		lines = append(lines, titleStyle.MarginTop(1).Render("Create a new project"))
+		lines = append(lines, "")
+		lines = append(lines, inputPromptStyle.Render(a.createInput.View()))
+		lines = append(lines, "")
+		lines = append(lines, helpStyle.Render("enter: create | esc: cancel | ctrl+c: quit"))
+		viewContent = lipgloss.JoinVertical(lipgloss.Left, lines...)
+
 	case stateStoppingTimer:
 		var lines []string
-		promptText := "Enter message for stopping timer (Project: " + *a.project.Name + ")"
+		projectName := ""
+		if a.project != nil {
+			projectName = a.project.Name
+		}
+		promptText := "Enter message for stopping timer (Project: " + projectName + ")"
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render(a.stopMessageInput.View()))
@@ -581,7 +630,11 @@ func (a app) View() string {
 
 	case stateManualEntry:
 		var lines []string
-		promptText := "Manually enter time for project: " + *a.project.Name
+		projectName := ""
+		if a.project != nil {
+			projectName = a.project.Name
+		}
+		promptText := "Manually enter time for project: " + projectName
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render("Duration (e.g., 1h30m):"))
@@ -621,7 +674,7 @@ func (a app) View() string {
 		if a.project == nil {
 			viewContent = errorStyle.Render("No project selected")
 		} else {
-			projectName := *a.project.Name
+			projectName := a.project.Name
 			header := titleStyle.MarginTop(1).Render(fmt.Sprintf("Project: %s", projectName))
 			entriesTitle := titleStyle.Render("Entries")
 			help := helpStyle.Render("↑/↓: navigate | m: move entry | d: delete | esc: back | q: quit")
@@ -656,7 +709,7 @@ func (a app) View() string {
 		var lines []string
 		lines = append(lines, titleStyle.MarginTop(1).Render("Rename project"))
 		if a.project != nil {
-			lines = append(lines, itemStyle.Render(fmt.Sprintf("Current name: %s", *a.project.Name)))
+			lines = append(lines, itemStyle.Render(fmt.Sprintf("Current name: %s", a.project.Name)))
 		}
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render(a.renameInput.View()))

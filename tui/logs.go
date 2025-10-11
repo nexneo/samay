@@ -14,7 +14,7 @@ func (a app) logTitleView() string {
 	if a.project == nil {
 		return "" // No title if no project
 	}
-	title := fmt.Sprintf("Logs for Project: %s", *a.project.Name)
+	title := fmt.Sprintf("Logs for Project: %s", a.project.Name)
 	return titleStyle.Render(title)
 }
 
@@ -52,7 +52,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 
 	var sb strings.Builder
 	dayKey := -1 // Initialize day to ensure the first header prints
-	var dayTotal int64
+	var dayTotal time.Duration
 	now := time.Now()
 	maxEntries := 30 // Limit number of entries displayed
 	if a.logShowAll {
@@ -93,11 +93,11 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 		sb.WriteString("\n") // Newline after header
 	}
 
-	printTotal := func(totalDuration int64) {
+	printTotal := func(totalDuration time.Duration) {
 		if totalDuration == 0 {
 			return
 		}
-		totalStr := data.HmFromD(time.Duration(totalDuration)).String()
+		totalStr := data.HmFromD(totalDuration).String()
 		totalLine := fmt.Sprintf("%-*s%s%-*s%s%s",
 			indexColWidth,
 			"",
@@ -122,9 +122,12 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 
 		ty, err := entry.EndedTime()
 		if err != nil {
-			// Handle error - maybe skip entry or show an error message?
 			sb.WriteString(errorStyle.Render(fmt.Sprintf("Error getting time for entry %d: %v\n", i, err)))
 			continue // Skip this entry
+		}
+
+		if ty == nil {
+			continue
 		}
 
 		// Check if the day has changed
@@ -137,10 +140,13 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 		}
 
 		// Add duration to total
+		duration := time.Duration(entry.GetDuration())
+		if duration > 0 {
+			dayTotal += duration
+		}
 		durationStr := "--:--"
-		if entry.Duration != nil {
-			dayTotal += *entry.Duration
-			durationStr = data.HmFromD(time.Duration(*entry.Duration)).String()
+		if duration > 0 {
+			durationStr = data.HmFromD(duration).String()
 		}
 
 		// Format description with rune-aware truncation

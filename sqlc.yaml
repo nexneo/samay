@@ -1,0 +1,10 @@
+version: "2"
+sql:
+  - schema: "data/sql/schema.sql"
+    queries: "data/sql/queries.sql"
+    engine: "sqlite"
+    gen:
+      go:
+        out: "data/sqlc"
+        package: "sqlc"
+        emit_exported_queries: true

@@ -54,7 +54,7 @@ func (a *app) prepareMoveProjectList() {
 		if a.project != nil && project.GetName() == a.project.GetName() {
 			continue
 		}
-		items = append(items, item(*project.Name))
+		items = append(items, item(project.Name))
 	}
 	l := list.New(items, itemDelegate{}, width, height)
 	l.Title = "Select target project"
@@ -71,7 +71,7 @@ func (a *app) refreshProjectList() {
 	projects := data.DB.Projects()
 	items := make([]list.Item, 0, len(projects))
 	for _, p := range projects {
-		items = append(items, item(*p.Name))
+		items = append(items, item(p.Name))
 	}
 	a.projects.SetItems(items)
 	height := len(items)*2 + 5
@@ -112,7 +112,7 @@ func (a app) projectColumnWidths(totalWidth int) (int, int) {
 }
 
 func (a app) projectFooterView() string {
-	baseControls := []string{"↑/↓: navigate", "r: monthly report (list)", "o: weekly overview", "q: quit"}
+	baseControls := []string{"↑/↓: navigate", "n: new project", "r: monthly report (list)", "o: weekly overview", "q: quit"}
 	return helpStyle.Render(strings.Join(baseControls, " | "))
 }
 
@@ -121,12 +121,17 @@ func (a app) projectActionsView(width int) string {
 		width = 40
 	}
 	if a.project == nil {
-		lines := []string{titleStyle.Render("Project actions"), "", projectActionStyle.Render("Select a project to see available actions.")}
+		lines := []string{
+			titleStyle.Render("Project actions"),
+			"",
+			projectActionStyle.Render("Select a project to see available actions."),
+			projectActionStyle.Render("Press 'n' to create a new project."),
+		}
 		return lipgloss.NewStyle().Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 	}
 
 	onclock, _ := a.project.OnClock()
-	projectName := "project: " + *a.project.Name
+	projectName := "project: " + a.project.Name
 	if onclock {
 		projectName += onClockStyle.Render(" (on clock)")
 	}
@@ -195,7 +200,7 @@ func (a *app) updateProjectSelectionFromList() {
 
 	name := string(selectedItem)
 	if project, found := lo.Find(data.DB.Projects(), func(p *data.Project) bool {
-		return *p.Name == name
+		return p.Name == name
 	}); found {
 		a.project = project
 		if a.state == stateProjectList {
@@ -211,7 +216,7 @@ func (a *app) updateProjectSelectionFromList() {
 		return
 	}
 	if project, found := lo.Find(data.DB.Projects(), func(p *data.Project) bool {
-		return *p.Name == string(firstItem)
+		return p.Name == string(firstItem)
 	}); found {
 		a.projects.Select(0)
 		a.project = project
@@ -230,6 +235,12 @@ func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
+	case "n":
+		a.previousState = a.state
+		a.createInput.SetValue("")
+		a.createInput.Focus()
+		a.state = stateCreateProject
+		return a, textinput.Blink
 	case "r":
 		a.ReportViewUI()
 		return a, nil
@@ -261,6 +272,12 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.project = nil
 		a.state = stateProjectList
 		return a, nil
+	case "n":
+		a.previousState = a.state
+		a.createInput.SetValue("")
+		a.createInput.Focus()
+		a.state = stateCreateProject
+		return a, textinput.Blink
 	case "r":
 		a.ReportViewUI()
 		return a, nil
@@ -312,14 +329,14 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.confirmProject = a.project
 		a.confirmEntry = nil
 		if a.project != nil {
-			a.confirmMessage = fmt.Sprintf("Delete project '%s'? This removes all entries.", *a.project.Name)
+			a.confirmMessage = fmt.Sprintf("Delete project '%s'? This removes all entries.", a.project.Name)
 		}
 		a.previousState = stateProjectMenu
 		a.state = stateConfirm
 		return a, nil
 	case "R", "shift+r":
 		if a.project != nil {
-			a.renameInput.SetValue(*a.project.Name)
+			a.renameInput.SetValue(a.project.Name)
 		}
 		a.state = stateRenameProject
 		a.renameInput.Focus()
