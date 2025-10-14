@@ -1,5 +1,7 @@
 # Samay Web
 
+**[App created using this prompt.](https://samay.lovable.app)**
+
 This document translates the existing Samay time-tracking experience into a standalone web application. It focuses on product capabilities, data contracts, and workflow expectations tailored for a browser-only build that stores data locally (no backend services).
 
 ## Product Goals
