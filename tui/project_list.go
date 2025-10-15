@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/nexneo/samay/data"
+	"github.com/nexneo/samay/util"
 	"github.com/samber/lo"
 )
 
@@ -130,10 +131,16 @@ func (a app) projectActionsView(width int) string {
 		return lipgloss.NewStyle().Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 	}
 
-	onclock, _ := a.project.OnClock()
+	onclock, timer := a.project.OnClock()
 	projectName := "project: " + a.project.Name
 	if onclock {
-		projectName += onClockStyle.Render(" (on clock)")
+		var duration string
+		if timer != nil {
+			duration = util.HmFromD(timer.Duration()).String()
+		} else {
+			duration = util.HmFromD(0).String()
+		}
+		projectName += onClockStyle.Render(fmt.Sprintf(" (on clock %s)", duration))
 	}
 	lines := []string{
 		titleStyle.Render(projectName),
