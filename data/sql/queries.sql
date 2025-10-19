@@ -5,29 +5,32 @@ SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
-ORDER BY updated_at DESC,
-         name COLLATE NOCASE;
+ORDER BY position ASC,
+         updated_at DESC;
 
 -- name: ListVisibleProjects :many
 SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
 WHERE is_hidden = 0
-ORDER BY updated_at DESC,
-         name COLLATE NOCASE;
+ORDER BY position ASC,
+         updated_at DESC;
 
 -- name: GetProject :one
 SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
@@ -38,6 +41,7 @@ SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
@@ -50,6 +54,7 @@ RETURNING id,
           name,
           company,
           is_hidden,
+          position,
           created_at,
           updated_at;
 
@@ -64,6 +69,7 @@ RETURNING id,
           name,
           company,
           is_hidden,
+          position,
           created_at,
           updated_at;
 

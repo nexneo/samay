@@ -17,6 +17,7 @@ type Project struct {
 	Name      string
 	Company   *string
 	IsHidden  bool
+	Position  int64
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -33,6 +34,7 @@ func newProjectFromModel(db *Database, model sqlc.Project) *Project {
 		Name:      model.Name,
 		Company:   company,
 		IsHidden:  model.IsHidden == 1,
+		Position:  model.Position,
 		CreatedAt: time.Unix(model.CreatedAt, 0).UTC(),
 		UpdatedAt: time.Unix(model.UpdatedAt, 0).UTC(),
 	}
@@ -250,6 +252,7 @@ func (p *Project) Rename(newName string) error {
 		p.Company = nil
 	}
 	p.IsHidden = record.IsHidden == 1
+	p.Position = record.Position
 	p.UpdatedAt = time.Unix(record.UpdatedAt, 0).UTC()
 	return nil
 }

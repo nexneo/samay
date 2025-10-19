@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS projects (
     name TEXT NOT NULL COLLATE NOCASE UNIQUE,
     company TEXT,
     is_hidden INTEGER NOT NULL DEFAULT 0 CHECK (is_hidden IN (0, 1)),
+    position INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 ) STRICT;
@@ -52,7 +53,7 @@ CREATE TABLE IF NOT EXISTS entry_tags (
     PRIMARY KEY (entry_id, tag)
 ) STRICT, WITHOUT ROWID;
 
-CREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at);
+CREATE INDEX IF NOT EXISTS idx_projects_ordering ON projects(position ASC, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_entries_project ON entries(project_id);
 CREATE INDEX IF NOT EXISTS idx_entries_project_ended ON entries(project_id, ended_at DESC, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_entries_creator ON entries(creator_id);

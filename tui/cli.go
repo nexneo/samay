@@ -84,37 +84,39 @@ const (
 )
 
 type app struct {
-	project           *data.Project
-	projects          list.Model
-	entries           list.Model
-	choices           [][2]string
-	state             state
-	stopMessageInput  textinput.Model // Renamed for clarity
-	manualTimeInput   textinput.Model // Input for manual entry time
-	manualMsgInput    textinput.Model // Input for manual entry message
-	manualEntryFocus  manualFocus     // Which input is focused in manual entry
-	manualBillable    bool
-	stopBillable      bool
-	stopEntryFocus    stopFocus
-	logViewport       viewport.Model // Viewport for scrolling logs
-	reportViewport    viewport.Model // Viewport for report output
-	dashboardViewport viewport.Model // Viewport for dashboard output
-	width             int            // store window width
-	height            int            // store window height
-	errorMessage      string         // To display temporary errors
-	selectedEntry     *data.Entry
-	confirmMessage    string
-	confirmAction     confirmAction
-	confirmEntry      *data.Entry
-	confirmProject    *data.Project
-	moveTargetProject *data.Project
-	moveProjects      list.Model
-	renameInput       textinput.Model
-	createInput       textinput.Model
-	reportMonth       time.Month
-	reportYear        int
-	logShowAll        bool
-	previousState     state
+	project             *data.Project
+	projects            list.Model
+	entries             list.Model
+	choices             [][2]string
+	state               state
+	stopMessageInput    textinput.Model // Renamed for clarity
+	manualTimeInput     textinput.Model // Input for manual entry time
+	manualMsgInput      textinput.Model // Input for manual entry message
+	manualEntryFocus    manualFocus     // Which input is focused in manual entry
+	manualBillable      bool
+	stopBillable        bool
+	stopEntryFocus      stopFocus
+	logViewport         viewport.Model // Viewport for scrolling logs
+	reportViewport      viewport.Model // Viewport for report output
+	dashboardViewport   viewport.Model // Viewport for dashboard output
+	width               int            // store window width
+	height              int            // store window height
+	errorMessage        string         // To display temporary errors
+	selectedEntry       *data.Entry
+	confirmMessage      string
+	confirmAction       confirmAction
+	confirmEntry        *data.Entry
+	confirmProject      *data.Project
+	moveTargetProject   *data.Project
+	moveProjects        list.Model
+	renameInput         textinput.Model
+	createInput         textinput.Model
+	reportMonth         time.Month
+	reportYear          int
+	logShowAll          bool
+	previousState       state
+	numericSelectBuffer string
+	numericSelectLast   time.Time
 }
 
 func CreateApp() *app {

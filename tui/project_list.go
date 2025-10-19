@@ -3,7 +3,9 @@ package tui
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -19,6 +21,8 @@ type item string
 func (i item) FilterValue() string { return "" }
 
 type itemDelegate struct{}
+
+const numericSelectionTimeout = 750 * time.Millisecond
 
 func (d itemDelegate) Height() int                             { return 1 }
 func (d itemDelegate) Spacing() int                            { return 0 }
@@ -84,7 +88,67 @@ func (a *app) refreshProjectList() {
 		width = 40
 	}
 	a.projects.SetSize(width, height)
+	a.resetNumericProjectSelection()
 	a.updateProjectSelectionFromList()
+}
+
+func (a *app) resetNumericProjectSelection() {
+	a.numericSelectBuffer = ""
+	a.numericSelectLast = time.Time{}
+}
+
+func (a *app) handleNumericProjectSelection(keypress string) bool {
+	if len(keypress) != 1 {
+		return false
+	}
+
+	r := rune(keypress[0])
+	if r < '0' || r > '9' {
+		return false
+	}
+
+	if len(a.projects.Items()) == 0 {
+		a.resetNumericProjectSelection()
+		return true
+	}
+
+	now := time.Now()
+	if !a.numericSelectLast.IsZero() && now.Sub(a.numericSelectLast) > numericSelectionTimeout {
+		a.numericSelectBuffer = ""
+	}
+	a.numericSelectLast = now
+	a.numericSelectBuffer += keypress
+
+	itemCount := len(a.projects.Items())
+
+	index, err := strconv.Atoi(a.numericSelectBuffer)
+	if err != nil {
+		a.resetNumericProjectSelection()
+		return true
+	}
+
+	if index >= 1 && index <= itemCount {
+		a.projects.Select(index - 1)
+		a.updateProjectSelectionFromList()
+		return true
+	}
+
+	if len(a.numericSelectBuffer) > 1 {
+		a.numericSelectBuffer = keypress
+		index, err = strconv.Atoi(a.numericSelectBuffer)
+		if err != nil {
+			a.resetNumericProjectSelection()
+			return true
+		}
+		if index >= 1 && index <= itemCount {
+			a.projects.Select(index - 1)
+			a.updateProjectSelectionFromList()
+			return true
+		}
+	}
+
+	a.resetNumericProjectSelection()
+	return true
 }
 
 func verticalDivider(height int) string {
@@ -239,7 +303,15 @@ func (a *app) updateProjectSelectionFromList() {
 
 // when the project list is active
 func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch keypress := msg.String(); keypress {
+	keypress := msg.String()
+
+	if a.handleNumericProjectSelection(keypress) {
+		return a, nil
+	}
+
+	a.resetNumericProjectSelection()
+
+	switch keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
 	case "n":
@@ -270,9 +342,17 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a, nil
 	}
 
+	keypress := msg.String()
+
+	if a.handleNumericProjectSelection(keypress) {
+		return a, nil
+	}
+
+	a.resetNumericProjectSelection()
+
 	onclock, _ := a.project.OnClock()
 
-	switch keypress := msg.String(); keypress {
+	switch keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
 	case "esc": // Go back to project list

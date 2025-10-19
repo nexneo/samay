@@ -120,6 +120,10 @@ func configureSQLite(db *sql.DB) error {
 }
 
 func (d *Database) ensureSchema(ctx context.Context) error {
+	if err := d.migrateProjectsTable(ctx); err != nil {
+		return err
+	}
+
 	statements := splitStatements(schemaSQL)
 	for _, stmt := range statements {
 		if strings.TrimSpace(stmt) == "" {
@@ -141,4 +145,35 @@ func splitStatements(sql string) []string {
 		}
 	}
 	return statements
+}
+
+func (d *Database) migrateProjectsTable(ctx context.Context) error {
+	if d == nil || d.sqlite == nil {
+		return nil
+	}
+
+	const tableExistsSQL = `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'projects'`
+	if err := d.sqlite.QueryRowContext(ctx, tableExistsSQL).Scan(new(string)); errors.Is(err, sql.ErrNoRows) {
+		return nil
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("check projects table existence: %w", err)
+	}
+
+	const checkColumnSQL = `SELECT 1 FROM pragma_table_info('projects') WHERE name = 'position'`
+	row := d.sqlite.QueryRowContext(ctx, checkColumnSQL)
+	var exists int
+	err := row.Scan(&exists)
+	if errors.Is(err, sql.ErrNoRows) {
+		if _, err := d.sqlite.ExecContext(ctx, `ALTER TABLE projects ADD COLUMN position INTEGER NOT NULL DEFAULT 0`); err != nil {
+			if strings.Contains(err.Error(), "duplicate column name") {
+				return nil
+			}
+			return fmt.Errorf("add projects.position column: %w", err)
+		}
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("check projects.position column: %w", err)
+	}
+	return nil
 }

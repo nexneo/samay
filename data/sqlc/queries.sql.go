@@ -83,6 +83,7 @@ RETURNING id,
           name,
           company,
           is_hidden,
+          position,
           created_at,
           updated_at
 `
@@ -101,6 +102,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.Name,
 		&i.Company,
 		&i.IsHidden,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -235,6 +237,7 @@ SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
@@ -249,6 +252,7 @@ func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
 		&i.Name,
 		&i.Company,
 		&i.IsHidden,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -260,6 +264,7 @@ SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
@@ -274,6 +279,7 @@ func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, e
 		&i.Name,
 		&i.Company,
 		&i.IsHidden,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -467,11 +473,12 @@ SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
-ORDER BY updated_at DESC,
-         name COLLATE NOCASE
+ORDER BY position ASC,
+         updated_at DESC
 `
 
 // Projects
@@ -489,6 +496,7 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 			&i.Name,
 			&i.Company,
 			&i.IsHidden,
+			&i.Position,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -548,12 +556,13 @@ SELECT id,
        name,
        company,
        is_hidden,
+       position,
        created_at,
        updated_at
 FROM projects
 WHERE is_hidden = 0
-ORDER BY updated_at DESC,
-         name COLLATE NOCASE
+ORDER BY position ASC,
+         updated_at DESC
 `
 
 func (q *Queries) ListVisibleProjects(ctx context.Context) ([]Project, error) {
@@ -570,6 +579,7 @@ func (q *Queries) ListVisibleProjects(ctx context.Context) ([]Project, error) {
 			&i.Name,
 			&i.Company,
 			&i.IsHidden,
+			&i.Position,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -704,6 +714,7 @@ RETURNING id,
           name,
           company,
           is_hidden,
+          position,
           created_at,
           updated_at
 `
@@ -728,6 +739,7 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 		&i.Name,
 		&i.Company,
 		&i.IsHidden,
+		&i.Position,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

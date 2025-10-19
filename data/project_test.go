@@ -158,6 +158,59 @@ func TestProjectCreateEntryVariants(t *testing.T) {
 	}
 }
 
+func TestProjectsSortedByPositionAndUpdatedAt(t *testing.T) {
+	db := openTempDatabase(t)
+
+	alpha, err := db.CreateProject("Alpha")
+	if err != nil {
+		t.Fatalf("create alpha project: %v", err)
+	}
+	bravo, err := db.CreateProject("Bravo")
+	if err != nil {
+		t.Fatalf("create bravo project: %v", err)
+	}
+	charlie, err := db.CreateProject("Charlie")
+	if err != nil {
+		t.Fatalf("create charlie project: %v", err)
+	}
+
+	ctx := context.Background()
+	now := time.Now().UTC().Unix()
+
+	updates := []struct {
+		id       int64
+		position int64
+		updated  int64
+	}{
+		{alpha.ID, 2, now},
+		{bravo.ID, 1, now + 1},
+		{charlie.ID, 1, now + 2},
+	}
+
+	for _, u := range updates {
+		if _, err := db.sqlite.ExecContext(ctx, "UPDATE projects SET position = ?, updated_at = ? WHERE id = ?", u.position, u.updated, u.id); err != nil {
+			t.Fatalf("update project %d: %v", u.id, err)
+		}
+	}
+
+	projects := db.Projects()
+	if len(projects) != 3 {
+		t.Fatalf("expected 3 projects, got %d", len(projects))
+	}
+
+	got := []string{projects[0].Name, projects[1].Name, projects[2].Name}
+	want := []string{"Charlie", "Bravo", "Alpha"}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("unexpected order at index %d: got %q, want %q (full order: %v)", i, got[i], want[i], got)
+		}
+	}
+
+	if projects[0].Position != 1 || projects[1].Position != 1 || projects[2].Position != 2 {
+		t.Fatalf("unexpected project positions: %v", []int64{projects[0].Position, projects[1].Position, projects[2].Position})
+	}
+}
+
 func TestProjectRenameNoOp(t *testing.T) {
 	db := openTempDatabase(t)
 

@@ -41,6 +41,7 @@ type Project struct {
 	Name      string
 	Company   sql.NullString
 	IsHidden  int64
+	Position  int64
 	CreatedAt int64
 	UpdatedAt int64
 }

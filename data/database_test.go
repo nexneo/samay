@@ -56,6 +56,9 @@ func TestDatabaseProjectLifecycle(t *testing.T) {
 	if project.Name != "Test Project" {
 		t.Fatalf("expected project name to be %q, got %q", "Test Project", project.Name)
 	}
+	if project.Position != 0 {
+		t.Fatalf("expected default project position to be 0, got %d", project.Position)
+	}
 
 	if _, err := db.CreateProject("Test Project"); err == nil {
 		t.Fatalf("expected duplicate project creation to fail")
