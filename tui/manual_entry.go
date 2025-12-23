@@ -22,18 +22,39 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a, tea.Quit
 	case "esc":
 		a.state = stateProjectMenu
+		a.manualDateInput.Blur()
 		a.manualTimeInput.Blur()
 		a.manualMsgInput.Blur()
-		a.manualEntryFocus = focusTime
+		a.manualEntryFocus = focusDate
 		a.manualBillable = true
+		a.manualDateInput.Reset()
+		a.manualTimeInput.Reset()
+		a.manualMsgInput.Reset()
 		return a, nil
 	case "enter":
+		dateStr := a.manualDateInput.Value()
 		durationStr := a.manualTimeInput.Value()
 		message := a.manualMsgInput.Value()
+
+		// Parse date, default to today
+		entryDate := time.Now()
+		if dateStr != "" {
+			parsedDate, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				a.errorMessage = fmt.Sprintf("Error parsing date: %v", err)
+				a.manualEntryFocus = focusDate
+				a.manualDateInput.Focus()
+				a.manualTimeInput.Blur()
+				a.manualMsgInput.Blur()
+				return a, textinput.Blink
+			}
+			entryDate = parsedDate
+		}
 
 		if durationStr == "" {
 			a.errorMessage = "Error: Duration cannot be empty."
 			a.manualEntryFocus = focusTime
+			a.manualDateInput.Blur()
 			a.manualTimeInput.Focus()
 			a.manualMsgInput.Blur()
 			return a, textinput.Blink
@@ -43,6 +64,7 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			a.errorMessage = fmt.Sprintf("Error parsing duration: %v", err)
 			a.manualEntryFocus = focusTime
+			a.manualDateInput.Blur()
 			a.manualTimeInput.Focus()
 			a.manualMsgInput.Blur()
 			return a, textinput.Blink
@@ -51,6 +73,7 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if message == "" {
 			a.errorMessage = "Error: Message cannot be empty."
 			a.manualEntryFocus = focusMessage
+			a.manualDateInput.Blur()
 			a.manualTimeInput.Blur()
 			a.manualMsgInput.Focus()
 			return a, textinput.Blink
@@ -62,20 +85,24 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, nil
 		}
 
-		if _, err := a.project.CreateEntryWithDuration(message, duration, a.manualBillable); err != nil {
+		if _, err := a.project.CreateEntryWithDurationAndDate(message, duration, entryDate, a.manualBillable); err != nil {
 			a.errorMessage = fmt.Sprintf("Error saving entry: %v", err)
 			return a, nil
 		}
 
 		a.refreshEntryList()
 		a.state = stateProjectMenu
+		a.manualDateInput.Blur()
 		a.manualTimeInput.Blur()
 		a.manualMsgInput.Blur()
-		a.manualEntryFocus = focusTime
+		a.manualEntryFocus = focusDate
 		a.manualBillable = true
+		a.manualDateInput.Reset()
+		a.manualTimeInput.Reset()
+		a.manualMsgInput.Reset()
 		return a, nil
 	case "tab", "shift+tab", "up", "down":
-		const manualFocusCount = 3
+		const manualFocusCount = 4
 		var delta int
 		switch keypress {
 		case "tab", "down":
@@ -89,13 +116,20 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.manualEntryFocus = manualFocus((int(a.manualEntryFocus) + delta + manualFocusCount) % manualFocusCount)
 
 		switch a.manualEntryFocus {
+		case focusDate:
+			a.manualDateInput.Focus()
+			a.manualTimeInput.Blur()
+			a.manualMsgInput.Blur()
 		case focusTime:
+			a.manualDateInput.Blur()
 			a.manualTimeInput.Focus()
 			a.manualMsgInput.Blur()
 		case focusMessage:
+			a.manualDateInput.Blur()
 			a.manualTimeInput.Blur()
 			a.manualMsgInput.Focus()
 		case focusBillable:
+			a.manualDateInput.Blur()
 			a.manualTimeInput.Blur()
 			a.manualMsgInput.Blur()
 		}
@@ -104,6 +138,9 @@ func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	default: // Handle regular character input
 		switch a.manualEntryFocus {
+		case focusDate:
+			a.manualDateInput, cmd = a.manualDateInput.Update(msg)
+			return a, cmd
 		case focusTime:
 			a.manualTimeInput, cmd = a.manualTimeInput.Update(msg)
 			return a, cmd

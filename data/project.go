@@ -174,6 +174,30 @@ func (p *Project) CreateEntryWithDuration(content string, duration time.Duration
 	return entry, nil
 }
 
+func (p *Project) CreateEntryWithDurationAndDate(content string, duration time.Duration, date time.Time, billable bool) (*Entry, error) {
+	entry := &Entry{
+		db:         p.db,
+		Project:    p,
+		ProjectID:  p.ID,
+		Content:    strings.TrimSpace(content),
+		DurationMs: duration.Milliseconds(),
+		Type:       EntryTypeWork,
+		Billable:   billable,
+		Tags:       extractTags(content),
+	}
+	// Set start and end times based on the provided date
+	// Start at midnight UTC on the provided date, end after the duration
+	startTime := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
+	endTime := startTime.Add(duration)
+	entry.StartedAt = &startTime
+	entry.EndedAt = &endTime
+
+	if err := entry.Save(context.Background()); err != nil {
+		return nil, err
+	}
+	return entry, nil
+}
+
 func (p *Project) CreateEntry(content string, billable bool) (*Entry, error) {
 	entry := &Entry{
 		db:        p.db,

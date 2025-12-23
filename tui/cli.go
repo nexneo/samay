@@ -63,7 +63,8 @@ const (
 type manualFocus int
 
 const (
-	focusTime manualFocus = iota
+	focusDate manualFocus = iota
+	focusTime
 	focusMessage
 	focusBillable
 )
@@ -90,6 +91,7 @@ type app struct {
 	choices             [][2]string
 	state               state
 	stopMessageInput    textinput.Model // Renamed for clarity
+	manualDateInput     textinput.Model // Input for manual entry date
 	manualTimeInput     textinput.Model // Input for manual entry time
 	manualMsgInput      textinput.Model // Input for manual entry message
 	manualEntryFocus    manualFocus     // Which input is focused in manual entry
@@ -157,6 +159,11 @@ func CreateApp() *app {
 	stopTI.Width = 50 // Adjust width as needed
 
 	// text input models for manual entry
+	manualDateTI := textinput.New()
+	manualDateTI.Placeholder = time.Now().Format("2006-01-02") // Default to today
+	manualDateTI.CharLimit = 10
+	manualDateTI.Width = 15
+
 	manualTimeTI := textinput.New()
 	manualTimeTI.Placeholder = "e.g., 1h30m, 45m"
 	manualTimeTI.CharLimit = 20
@@ -198,9 +205,10 @@ func CreateApp() *app {
 		projects:          l,
 		state:             initialState,
 		stopMessageInput:  stopTI,
+		manualDateInput:   manualDateTI,
 		manualTimeInput:   manualTimeTI,
 		manualMsgInput:    manualMsgTI,
-		manualEntryFocus:  focusTime,
+		manualEntryFocus:  focusDate,
 		manualBillable:    true,
 		stopBillable:      true,
 		stopEntryFocus:    focusStopMessage,
@@ -343,6 +351,9 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case stateManualEntry:
 		switch a.manualEntryFocus {
+		case focusDate:
+			a.manualDateInput, cmd = a.manualDateInput.Update(msg)
+			cmds = append(cmds, cmd)
 		case focusTime:
 			a.manualTimeInput, cmd = a.manualTimeInput.Update(msg)
 			cmds = append(cmds, cmd)
@@ -640,8 +651,11 @@ func (a app) View() string {
 		promptText := "Manually enter time for project: " + projectName
 		lines = append(lines, titleStyle.MarginTop(1).Render(promptText))
 		lines = append(lines, "")
-		lines = append(lines, inputPromptStyle.Render("Duration (e.g., 1h30m):"))
+		lines = append(lines, inputPromptStyle.Render("Date (default: today):"))
 		fieldStyle := itemStyle.PaddingLeft(2)
+		lines = append(lines, fieldStyle.Render(a.manualDateInput.View()))
+		lines = append(lines, "")
+		lines = append(lines, inputPromptStyle.Render("Duration (e.g., 1h30m):"))
 		lines = append(lines, fieldStyle.Render(a.manualTimeInput.View()))
 		lines = append(lines, "")
 		lines = append(lines, inputPromptStyle.Render("Message:"))
