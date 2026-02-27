@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 )
 
 // when asking for manual entry details
-func (a *app) handleKeypressManualEntry(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressManualEntry(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
-	if msg.Type == tea.KeySpace && a.manualEntryFocus == focusBillable {
+	if msg.String() == "space" && a.manualEntryFocus == focusBillable {
 		a.manualBillable = !a.manualBillable
 		return a, textinput.Blink
 	}

@@ -3,10 +3,10 @@ package tui
 import (
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
-func (a *app) handleKeypressReportView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressReportView(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit

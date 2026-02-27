@@ -3,13 +3,13 @@ package tui
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 )
 
 // when asking for stop message
-func (a *app) handleKeypressStoppingTimer(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if msg.Type == tea.KeySpace && a.stopEntryFocus == focusStopBillable {
+func (a *app) handleKeypressStoppingTimer(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if msg.String() == "space" && a.stopEntryFocus == focusStopBillable {
 		a.stopBillable = !a.stopBillable
 		return a, textinput.Blink
 	}

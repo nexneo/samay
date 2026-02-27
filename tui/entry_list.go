@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 	"github.com/nexneo/samay/data"
 	"github.com/nexneo/samay/util"
 )
@@ -96,7 +96,7 @@ func entryFromListItem(i list.Item) *data.Entry {
 	return nil
 }
 
-func (a *app) handleKeypressEntryList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressEntryList(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit

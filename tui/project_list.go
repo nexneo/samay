@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/nexneo/samay/data"
 	"github.com/nexneo/samay/util"
 	"github.com/samber/lo"
@@ -302,7 +302,7 @@ func (a *app) updateProjectSelectionFromList() {
 }
 
 // when the project list is active
-func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressProjectList(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	keypress := msg.String()
 
 	if a.handleNumericProjectSelection(keypress) {
@@ -336,7 +336,7 @@ func (a *app) handleKeypressProjectList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // when the project menu is active
-func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressProjectMenu(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if a.project == nil { // Safety check
 		a.state = stateProjectList
 		return a, nil
@@ -401,9 +401,9 @@ func (a *app) handleKeypressProjectMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "l": // Show Logs
 		a.state = stateShowLogs
 		// Format logs and set viewport content
-		a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width)) // Pass width
-		a.logViewport.GotoTop()                                                       // Scroll to top initially
-		a.errorMessage = ""                                                           // Clear previous errors
+		a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width())) // Pass width
+		a.logViewport.GotoTop()                                                         // Scroll to top initially
+		a.errorMessage = ""                                                             // Clear previous errors
 		return a, nil
 	case "v":
 		a.refreshEntryList()

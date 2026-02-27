@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time" // Import the time package
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport" // Import viewport for scrolling logs
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport" // Import viewport for scrolling logs
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/nexneo/samay/data"
 	"github.com/nexneo/samay/util"
 	"github.com/samber/lo"
@@ -23,8 +23,8 @@ var (
 	projectShortcutSlot  = lipgloss.NewStyle().Width(3)
 	projectLabelStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 	selectedItemStyle    = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle      = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle            = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1).Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"})
+	paginationStyle      = list.DefaultStyles(false).PaginationStyle.PaddingLeft(4)
+	helpStyle            = list.DefaultStyles(false).HelpStyle.PaddingLeft(4).PaddingBottom(1).Foreground(lipgloss.Color("#777777"))
 	inputPromptStyle     = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("109")) // Style for input prompt
 	errorStyle           = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).PaddingLeft(2) // Style for error messages
 	logHeaderStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("37")).Bold(true)      // Style for log date headers
@@ -156,43 +156,43 @@ func CreateApp() *app {
 	stopTI := textinput.New()
 	stopTI.Placeholder = "Enter stop message (optional, press Enter to submit, Esc to cancel)"
 	stopTI.CharLimit = 156
-	stopTI.Width = 50 // Adjust width as needed
+	stopTI.SetWidth(50) // Adjust width as needed
 
 	// text input models for manual entry
 	manualDateTI := textinput.New()
 	manualDateTI.Placeholder = time.Now().Format("2006-01-02") // Default to today
 	manualDateTI.CharLimit = 10
-	manualDateTI.Width = 15
+	manualDateTI.SetWidth(15)
 
 	manualTimeTI := textinput.New()
 	manualTimeTI.Placeholder = "e.g., 1h30m, 45m"
 	manualTimeTI.CharLimit = 20
-	manualTimeTI.Width = 20
+	manualTimeTI.SetWidth(20)
 
 	manualMsgTI := textinput.New()
 	manualMsgTI.Placeholder = "Description of the work done"
 	manualMsgTI.CharLimit = 156
-	manualMsgTI.Width = 50
+	manualMsgTI.SetWidth(50)
 
 	renameTI := textinput.New()
 	renameTI.Placeholder = "Enter new project name"
 	renameTI.CharLimit = 120
-	renameTI.Width = 50
+	renameTI.SetWidth(50)
 
 	createTI := textinput.New()
 	createTI.Placeholder = "Enter project name"
 	createTI.CharLimit = 120
-	createTI.Width = 50
+	createTI.SetWidth(50)
 
 	// Viewport for logs
-	vp := viewport.New(defaultWidth, 20) // Initial size, will be updated
+	vp := viewport.New(viewport.WithWidth(defaultWidth), viewport.WithHeight(20)) // Initial size, will be updated
 	vp.Style = lipgloss.NewStyle().MarginLeft(2)
 	vp.SetContent("Loading logs...") // Placeholder content
 
-	reportVP := viewport.New(defaultWidth, 20)
+	reportVP := viewport.New(viewport.WithWidth(defaultWidth), viewport.WithHeight(20))
 	reportVP.SetContent("Report will appear here")
 
-	dashboardVP := viewport.New(defaultWidth, 20)
+	dashboardVP := viewport.New(viewport.WithWidth(defaultWidth), viewport.WithHeight(20))
 	dashboardVP.SetContent("Dashboard coming soon")
 
 	initialState := stateProjectList
@@ -272,29 +272,29 @@ func (a app) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Update viewport size, leave some space for title and help
 		headerHeight := lipgloss.Height(a.logTitleView())
 		footerHeight := lipgloss.Height(a.logHelpView())
-		a.logViewport.Width = msg.Width
-		a.logViewport.Height = msg.Height - headerHeight - footerHeight
-		a.reportViewport.Width = msg.Width
-		a.reportViewport.Height = msg.Height - 4
-		a.dashboardViewport.Width = msg.Width
-		a.dashboardViewport.Height = msg.Height - 4
+		a.logViewport.SetWidth(msg.Width)
+		a.logViewport.SetHeight(msg.Height - headerHeight - footerHeight)
+		a.reportViewport.SetWidth(msg.Width)
+		a.reportViewport.SetHeight(msg.Height - 4)
+		a.dashboardViewport.SetWidth(msg.Width)
+		a.dashboardViewport.SetHeight(msg.Height - 4)
 		if len(a.entries.Items()) > 0 {
 			a.entries.SetSize(msg.Width, msg.Height-6)
 		}
 		if len(a.moveProjects.Items()) > 0 {
 			a.moveProjects.SetSize(msg.Width, msg.Height-6)
 		}
-		a.renameInput.Width = msg.Width - 10
+		a.renameInput.SetWidth(msg.Width - 10)
 		// Adjust input widths dynamically if desired
 		// a.stopMessageInput.Width = msg.Width - 10
 		// a.manualMsgInput.Width = msg.Width - 30
 		// Re-render logs if we are in that state, as width might affect wrapping
 		if a.project != nil {
-			a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width)) // Pass width
+			a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width())) // Pass width
 		}
 		return a, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle key presses based on the current state
 		switch a.state {
 		case stateProjectList:
@@ -497,7 +497,7 @@ func detailLine(label, value string) string {
 	return lipgloss.JoinHorizontal(lipgloss.Left, labelRendered, detailValueStyle.Render(value))
 }
 
-func (a *app) handleKeypressConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressConfirm(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c":
 		return a, tea.Quit
@@ -516,7 +516,7 @@ func (a *app) handleKeypressConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
-func (a *app) handleKeypressMoveEntryTarget(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressMoveEntryTarget(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
@@ -542,7 +542,7 @@ func (a *app) handleKeypressMoveEntryTarget(msg tea.KeyMsg) (tea.Model, tea.Cmd)
 	return a, cmd
 }
 
-func (a *app) handleKeypressDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressDashboard(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
@@ -559,7 +559,7 @@ func (a *app) handleKeypressDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, cmd
 }
 
-func (a *app) handleKeypressRenameProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressRenameProject(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
@@ -577,7 +577,7 @@ func (a *app) handleKeypressRenameProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, cmd
 }
 
-func (a *app) handleKeypressCreateProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressCreateProject(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch keypress := msg.String(); keypress {
 	case "ctrl+c", "q":
 		return a, tea.Quit
@@ -600,7 +600,7 @@ func (a *app) handleKeypressCreateProject(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, cmd
 }
 
-func (a app) View() string {
+func (a app) View() tea.View {
 	var viewContent string
 
 	switch a.state {
@@ -770,5 +770,5 @@ func (a app) View() string {
 
 	}
 
-	return viewContent
+	return tea.NewView(viewContent)
 }

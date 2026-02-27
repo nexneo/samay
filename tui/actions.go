@@ -291,7 +291,7 @@ func (a *app) ProjectLogUI() {
 		a.errorMessage = "No project selected"
 		return
 	}
-	a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width))
+	a.logViewport.SetContent(a.formatProjectLogs(a.project, a.logViewport.Width()))
 	if !a.logShowAll {
 		a.logViewport.GotoTop()
 	}

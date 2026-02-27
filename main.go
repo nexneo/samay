@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/nexneo/samay/data"
 	"github.com/nexneo/samay/tui"
 	"github.com/nexneo/samay/util/version"

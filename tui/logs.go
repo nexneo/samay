@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/nexneo/samay/data"
 	"github.com/nexneo/samay/util"
 )
@@ -179,7 +179,7 @@ func (a *app) formatProjectLogs(project *data.Project, width int) string {
 }
 
 // when showing logs
-func (a *app) handleKeypressShowLogs(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *app) handleKeypressShowLogs(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch keypress := msg.String(); keypress {
